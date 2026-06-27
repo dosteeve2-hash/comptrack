@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Fix: silence workspace root warning from multiple lockfiles
+  outputFileTracingRoot: process.cwd(),
   async headers() {
     return [
       {
