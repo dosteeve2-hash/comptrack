@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2333;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #4e5f82;
+  --green: #22c55e;
+  --green2: #16a34a;
+  --blue: #3b82f6;
+  --blue2: #2563eb;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --border: #21262d;
+  --border2: #30363d;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--green);
+  border-radius: 2px;
+}
+
+/* Text selection */
+::selection {
+  background-color: var(--green);
+  color: var(--bg);
+}
+
+/* Recharts tooltip */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Print styles for factures */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .print-facture {
+    background: white !important;
+    color: black !important;
+    padding: 40px !important;
+  }
+}
