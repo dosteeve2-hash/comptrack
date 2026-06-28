@@ -9,6 +9,8 @@ import {
   ArrowDownRight,
   X,
   ChevronDown,
+  List,
+  BookOpen,
 } from "lucide-react";
 import { transactions as initialTransactions, categories } from "@/lib/data";
 import type { Transaction } from "@/lib/data";
@@ -38,6 +40,24 @@ const statutLabels: Record<Transaction["statut"], { label: string; color: string
   annulee: { label: "Annulée", color: "var(--text2)" },
 };
 
+type VueTx = "simple" | "journal";
+
+// Mapping des catégories vers des comptes comptables (plan SYSCOHADA simplifié)
+const compteParCategorie: Record<string, { debit: string; credit: string }> = {
+  "Ventes produits":       { debit: "5111 - Banque",             credit: "7011 - Ventes marchandes" },
+  "Prestations services":  { debit: "5111 - Banque",             credit: "7061 - Prestations services" },
+  "Consultations":         { debit: "5111 - Banque",             credit: "7061 - Prestations services" },
+  "Achat stock":           { debit: "3021 - Achats marchandises", credit: "5111 - Banque" },
+  "Salaires":              { debit: "6611 - Salaires",           credit: "5111 - Banque" },
+  "Loyer":                 { debit: "6211 - Loyers",             credit: "5111 - Banque" },
+  "Transport":             { debit: "6241 - Transport",          credit: "5111 - Banque" },
+  "Télécommunications":    { debit: "6261 - Télécoms",           credit: "5111 - Banque" },
+  "Électricité/Eau":       { debit: "6055 - Énergie/Eau",        credit: "5111 - Banque" },
+  "Fournitures bureau":    { debit: "6011 - Fournitures",        credit: "5111 - Banque" },
+  "Marketing":             { debit: "6631 - Publicité",          credit: "5111 - Banque" },
+  "Maintenance":           { debit: "6051 - Entretien",          credit: "5111 - Banque" },
+};
+
 export default function TransactionsPage() {
   const [txList, setTxList] = useState<Transaction[]>(initialTransactions);
   const [search, setSearch] = useState("");
@@ -46,6 +66,7 @@ export default function TransactionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<NewTransactionForm>(defaultForm);
   const [formError, setFormError] = useState("");
+  const [vue, setVue] = useState<VueTx>("simple");
 
   // Filtered list
   const filtered = useMemo(() => {
@@ -122,18 +143,41 @@ export default function TransactionsPage() {
             {filtered.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setForm(defaultForm);
-            setFormError("");
-            setModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-          style={{ background: "var(--green)", color: "#000" }}
-        >
-          <Plus className="w-4 h-4" />
-          Nouvelle transaction
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Vue toggle */}
+          <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
+            {([
+              { id: "simple", label: "Vue simple", icon: List },
+              { id: "journal", label: "Journal comptable", icon: BookOpen },
+            ] as const).map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setVue(v.id)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  background: vue === v.id ? "var(--bg3)" : "transparent",
+                  color: vue === v.id ? "var(--text)" : "var(--text2)",
+                  border: vue === v.id ? "1px solid var(--border2)" : "1px solid transparent",
+                }}
+              >
+                <v.icon className="w-3.5 h-3.5" />
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => {
+              setForm(defaultForm);
+              setFormError("");
+              setModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{ background: "var(--green)", color: "#000" }}
+          >
+            <Plus className="w-4 h-4" />
+            Nouvelle transaction
+          </button>
+        </div>
       </div>
 
       {/* Summary */}
@@ -231,7 +275,94 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Vue journal comptable */}
+      {vue === "journal" && (
+        <div className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+          <div
+            className="px-6 py-4 border-b flex items-start gap-3"
+            style={{ borderColor: "var(--border)", background: "rgba(59,130,246,0.04)" }}
+          >
+            <BookOpen className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "var(--blue)" }} />
+            <div>
+              <p className="text-sm font-semibold">Journal comptable — double entrée (SYSCOHADA)</p>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
+                Chaque opération génère un débit et un crédit d&apos;égale valeur. Débit = ressources utilisées. Crédit = origine des ressources.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-xs font-medium uppercase tracking-wider" style={{ borderColor: "var(--border)", color: "var(--text2)" }}>
+                  <th className="text-left px-6 py-3">Date</th>
+                  <th className="text-left px-4 py-3">Libellé</th>
+                  <th className="text-left px-4 py-3">Compte débité</th>
+                  <th className="text-left px-4 py-3">Compte crédité</th>
+                  <th className="text-right px-4 py-3">Débit</th>
+                  <th className="text-right px-6 py-3">Crédit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12" style={{ color: "var(--text2)" }}>
+                      Aucune transaction
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((tx) => {
+                    const comptes = compteParCategorie[tx.categorie] ?? {
+                      debit: tx.type === "revenu" ? "5111 - Banque" : "6099 - Charges diverses",
+                      credit: tx.type === "revenu" ? "7099 - Produits divers" : "5111 - Banque",
+                    };
+                    return (
+                      <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-3 text-xs font-mono" style={{ color: "var(--text2)" }}>
+                          {formatDate(tx.date)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-xs truncate max-w-xs">{tx.description}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>{tx.categorie}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--green)" }}>
+                          {comptes.debit}
+                        </td>
+                        <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--blue)" }}>
+                          {comptes.credit}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-sm" style={{ color: "var(--green)" }}>
+                          {tx.type === "revenu" ? formatMontant(tx.montant) : "—"}
+                        </td>
+                        <td className="px-6 py-3 text-right font-mono text-sm" style={{ color: "var(--red)" }}>
+                          {tx.type === "depense" ? formatMontant(tx.montant) : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+              {filtered.length > 0 && (
+                <tfoot>
+                  <tr className="border-t font-bold" style={{ borderColor: "var(--border2)", background: "var(--bg3)" }}>
+                    <td colSpan={4} className="px-6 py-3 text-xs uppercase tracking-wider" style={{ color: "var(--text2)" }}>
+                      Totaux
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--green)" }}>
+                      {formatMontant(filtered.filter(t => t.type === "revenu").reduce((s, t) => s + t.montant, 0))}
+                    </td>
+                    <td className="px-6 py-3 text-right font-mono" style={{ color: "var(--red)" }}>
+                      {formatMontant(filtered.filter(t => t.type === "depense").reduce((s, t) => s + t.montant, 0))}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Table vue simple */}
+      {vue === "simple" && (
       <div
         className="rounded-2xl border overflow-hidden"
         style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
@@ -324,6 +455,7 @@ export default function TransactionsPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Modal */}
       {modalOpen && (
