@@ -11,7 +11,9 @@ import {
   ChevronDown,
   List,
   BookOpen,
+  Download,
 } from "lucide-react";
+import { exportTransactions } from "@/lib/export";
 import { transactions as initialTransactions, categories } from "@/lib/data";
 import type { Transaction } from "@/lib/data";
 import { formatMontant, formatDate } from "@/lib/utils";
@@ -165,6 +167,15 @@ export default function TransactionsPage() {
               </button>
             ))}
           </div>
+          <button
+            onClick={() => exportTransactions(filtered)}
+            title={`Exporter ${filtered.length} transaction(s) en CSV`}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{ border: "1px solid var(--border2)", color: "var(--text2)", background: "var(--bg2)" }}
+          >
+            <Download className="w-4 h-4" />
+            Exporter CSV
+          </button>
           <button
             onClick={() => {
               setForm(defaultForm);
