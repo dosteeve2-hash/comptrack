@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import MonthlySummary from '@/components/MonthlySummary'
+import RevenueChart from '@/components/RevenueChart'
 import DashboardClient from './DashboardClient'
 
 // Fallback skeleton pendant le fetch Supabase
@@ -17,12 +18,26 @@ function MonthlySummarySkeleton() {
   )
 }
 
+function RevenueChartSkeleton() {
+  return (
+    <div
+      className="h-60 rounded-xl animate-pulse"
+      style={{ background: 'var(--bg3)' }}
+    />
+  )
+}
+
 export default function DashboardPage() {
   return (
     <DashboardClient
       monthlySummary={
         <Suspense fallback={<MonthlySummarySkeleton />}>
           <MonthlySummary />
+        </Suspense>
+      }
+      revenueChart={
+        <Suspense fallback={<RevenueChartSkeleton />}>
+          <RevenueChart />
         </Suspense>
       }
     />

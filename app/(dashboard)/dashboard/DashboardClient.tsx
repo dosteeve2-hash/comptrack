@@ -100,9 +100,10 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 interface DashboardClientProps {
   monthlySummary?: React.ReactNode;
+  revenueChart?: React.ReactNode;
 }
 
-export default function DashboardClient({ monthlySummary }: DashboardClientProps) {
+export default function DashboardClient({ monthlySummary, revenueChart }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -455,6 +456,40 @@ export default function DashboardClient({ monthlySummary }: DashboardClientProps
           </div>
         ))}
       </div>
+
+      {/* ─── Évolution mensuelle (Server Component via Suspense) ──────────── */}
+      {revenueChart && (
+        <div
+          className="p-6 rounded-2xl border"
+          style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-semibold">Évolution mensuelle</h3>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
+                Revenus vs Dépenses — 6 derniers mois
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-xs">
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: "#22c55e" }}
+                />
+                Revenus
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: "#ef4444" }}
+                />
+                Dépenses
+              </span>
+            </div>
+          </div>
+          {revenueChart}
+        </div>
+      )}
 
       {/* Charts row */}
       <div className="grid lg:grid-cols-3 gap-6">
