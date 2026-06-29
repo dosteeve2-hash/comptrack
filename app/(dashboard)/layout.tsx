@@ -17,6 +17,7 @@ import {
   X,
   Bell,
   GraduationCap,
+  Truck,
 } from "lucide-react";
 
 interface NavItem {
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/rapports", label: "Rapports", icon: BarChart3 },
   { href: "/clients", label: "Clients", icon: Users },
+  { href: "/fournisseurs", label: "Fournisseurs", icon: Truck },
   { href: "/factures", label: "Factures", icon: FileText },
   { href: "/apprendre", label: "Apprendre", icon: GraduationCap },
   { href: "/parametres", label: "Paramètres", icon: Settings },
