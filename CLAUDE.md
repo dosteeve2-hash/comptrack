@@ -108,4 +108,4 @@ npm run lint     # Lint ESLint
 ---
 
 *Dernière mise à jour : 2026-06-27*
-*Maintenu par Steve Donald Compaoré*
+*Maintenu par Steeve Donald Compaoré*

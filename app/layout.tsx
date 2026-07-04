@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "La comptabilité simple et efficace pour les TPE/PME africaines. Gérez vos revenus, dépenses et factures en toute simplicité.",
   keywords: ["comptabilité", "TPE", "PME", "Afrique", "FCFA", "facturation"],
-  authors: [{ name: "Steve Donald Compaoré" }],
+  authors: [{ name: "Steeve Donald Compaoré" }],
   openGraph: {
     title: "CompTrack — Comptabilité simplifiée",
     description: "La comptabilité simple pour votre business africain",

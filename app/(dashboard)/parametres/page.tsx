@@ -33,7 +33,7 @@ export default function ParametresPage() {
   });
 
   const [compte, setCompte] = useState({
-    nom: "Steve Donald Compaoré",
+    nom: "Steeve Donald Compaoré",
     email: "docompaore2@gmail.com",
     langue: "Français",
     fuseau: "Africa/Ouagadougou (UTC+0)",

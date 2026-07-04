@@ -1,18 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Download, X, Printer, Eye, ChevronDown } from "lucide-react";
+import { Plus, Download, X, Printer, Eye, ChevronDown, Send, CheckCircle2, ArrowRight } from "lucide-react";
 import { factures as initialFactures, clients } from "@/lib/data";
-import type { Facture, FactureArticle } from "@/lib/data";
+import type { Facture, FactureArticle, Transaction } from "@/lib/data";
 import { formatMontant, formatDate } from "@/lib/utils";
 
 const statutConfig: Record<
   Facture["statut"],
   { label: string; bg: string; color: string }
 > = {
-  payee: { label: "Payée", bg: "rgba(34,197,94,0.1)", color: "var(--green)" },
+  brouillon: { label: "Brouillon", bg: "rgba(139,148,158,0.1)", color: "var(--text2)" },
+  envoyee: { label: "Envoyée", bg: "rgba(59,130,246,0.1)", color: "var(--blue)" },
   en_attente: { label: "En attente", bg: "rgba(245,158,11,0.1)", color: "var(--amber)" },
+  payee: { label: "Payée", bg: "rgba(34,197,94,0.1)", color: "var(--green)" },
   retard: { label: "En retard", bg: "rgba(239,68,68,0.1)", color: "var(--red)" },
+};
+
+// Ordre des statuts pour le flux
+const statutSuivant: Partial<Record<Facture["statut"], Facture["statut"]>> = {
+  brouillon: "envoyee",
+  envoyee: "en_attente",
+  en_attente: "payee",
 };
 
 interface NewFactureForm {
@@ -30,6 +39,7 @@ const defaultArticle = (): FactureArticle => ({
 
 export default function FacturesPage() {
   const [factureList, setFactureList] = useState<Facture[]>(initialFactures);
+  const [txCreees, setTxCreees] = useState<Transaction[]>([]); // transactions auto-créées via "Marquer payée"
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [filterStatut, setFilterStatut] = useState<"all" | Facture["statut"]>("all");
@@ -39,6 +49,41 @@ export default function FacturesPage() {
     articles: [defaultArticle()],
   });
   const [formError, setFormError] = useState("");
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
+  const handleAvancerStatut = (id: string) => {
+    setFactureList((prev) =>
+      prev.map((f) => {
+        if (f.id !== id) return f;
+        const next = statutSuivant[f.statut];
+        if (!next) return f;
+        const updated = { ...f, statut: next };
+        if (next === "payee") {
+          // Créer une transaction revenu automatiquement
+          const newTx: Transaction = {
+            id: `tx-fac-${Date.now()}`,
+            type: "revenu",
+            montant: f.montant,
+            categorie: "Prestations services",
+            description: `Paiement ${f.numero} — ${f.client}`,
+            date: new Date().toISOString().split("T")[0],
+            client: f.client,
+            statut: "validee",
+          };
+          setTxCreees((prev) => [newTx, ...prev]);
+          showToast(`✓ Facture marquée payée · Transaction revenu créée automatiquement`);
+          // Mettre à jour selectedFacture si c'est celle-là
+          setSelectedFacture((sel) => sel?.id === id ? updated : sel);
+        }
+        return updated;
+      })
+    );
+  };
 
   const filtered = factureList.filter(
     (f) => filterStatut === "all" || f.statut === filterStatut
@@ -47,8 +92,8 @@ export default function FacturesPage() {
   const totalPayee = factureList
     .filter((f) => f.statut === "payee")
     .reduce((s, f) => s + f.montant, 0);
-  const totalEnAttente = factureList
-    .filter((f) => f.statut === "en_attente")
+  const totalEnCours = factureList
+    .filter((f) => ["envoyee", "en_attente"].includes(f.statut))
     .reduce((s, f) => s + f.montant, 0);
   const totalRetard = factureList
     .filter((f) => f.statut === "retard")
@@ -89,7 +134,7 @@ export default function FacturesPage() {
       montant: montantTotal,
       dateCreation: new Date().toISOString().split("T")[0],
       dateEcheance: form.dateEcheance,
-      statut: "en_attente",
+      statut: "brouillon",
       articles: form.articles,
     };
 
@@ -131,7 +176,7 @@ export default function FacturesPage() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: "Encaissé", value: totalPayee, color: "var(--green)" },
-          { label: "En attente", value: totalEnAttente, color: "var(--amber)" },
+          { label: "En cours", value: totalEnCours, color: "var(--amber)" },
           { label: "En retard", value: totalRetard, color: "var(--red)" },
         ].map((s, i) => (
           <div
@@ -149,29 +194,63 @@ export default function FacturesPage() {
         ))}
       </div>
 
+      {/* Flux info */}
+      <div
+        className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs"
+        style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", color: "var(--text2)" }}
+      >
+        <span style={{ color: "var(--blue)" }}>Flux :</span>
+        {(["brouillon", "envoyee", "en_attente", "payee"] as const).map((s, i) => (
+          <span key={s} className="flex items-center gap-2">
+            <span style={{ color: statutConfig[s].color }}>{statutConfig[s].label}</span>
+            {i < 3 && <ArrowRight className="w-3 h-3" />}
+          </span>
+        ))}
+        <span className="ml-2">· Utilisez le bouton ▶ sur chaque facture pour avancer le statut</span>
+      </div>
+
       {/* Filter tabs */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
-        {(["all", "payee", "en_attente", "retard"] as const).map((s) => (
+      <div className="flex flex-wrap gap-1 p-1 rounded-xl w-fit" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
+        {(["all", "brouillon", "envoyee", "en_attente", "payee", "retard"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilterStatut(s)}
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            className="px-3 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               background: filterStatut === s ? "var(--bg3)" : "transparent",
               color: filterStatut === s ? "var(--text)" : "var(--text2)",
               border: filterStatut === s ? "1px solid var(--border2)" : "1px solid transparent",
             }}
           >
-            {s === "all"
-              ? "Toutes"
-              : s === "payee"
-              ? "Payées"
-              : s === "en_attente"
-              ? "En attente"
-              : "En retard"}
+            {s === "all" ? "Toutes" : statutConfig[s].label}
           </button>
         ))}
       </div>
+
+      {/* Transactions auto-créées */}
+      {txCreees.length > 0 && (
+        <div
+          className="p-4 rounded-xl text-sm"
+          style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}
+        >
+          <p className="font-semibold text-sm mb-1" style={{ color: "var(--green)" }}>
+            ✓ {txCreees.length} transaction{txCreees.length > 1 ? "s" : ""} revenu créée{txCreees.length > 1 ? "s" : ""} automatiquement
+          </p>
+          <p className="text-xs" style={{ color: "var(--text2)" }}>
+            Ces transactions sont disponibles dans l&apos;onglet Transactions.
+          </p>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toastMsg && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-sm font-medium shadow-lg animate-slide-up"
+          style={{ background: "var(--green)", color: "#000" }}
+        >
+          {toastMsg}
+        </div>
+      )}
 
       {/* Factures list */}
       <div
@@ -238,6 +317,30 @@ export default function FacturesPage() {
                         >
                           <Printer className="w-4 h-4" />
                         </button>
+                        {statutSuivant[f.statut] && (
+                          <button
+                            onClick={() => handleAvancerStatut(f.id)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all hover:brightness-110"
+                            style={{
+                              background: statutSuivant[f.statut] === "payee"
+                                ? "rgba(34,197,94,0.15)"
+                                : "rgba(59,130,246,0.1)",
+                              color: statutSuivant[f.statut] === "payee"
+                                ? "var(--green)"
+                                : "var(--blue)",
+                              border: `1px solid ${statutSuivant[f.statut] === "payee" ? "rgba(34,197,94,0.3)" : "rgba(59,130,246,0.3)"}`,
+                            }}
+                            title={`Passer à : ${statutConfig[statutSuivant[f.statut]!].label}`}
+                          >
+                            {statutSuivant[f.statut] === "payee" ? (
+                              <><CheckCircle2 className="w-3.5 h-3.5" />&nbsp;Payée</>
+                            ) : statutSuivant[f.statut] === "en_attente" ? (
+                              <><Send className="w-3.5 h-3.5" />&nbsp;Envoyer</>
+                            ) : (
+                              <><ArrowRight className="w-3.5 h-3.5" />&nbsp;{statutConfig[statutSuivant[f.statut]!].label}</>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

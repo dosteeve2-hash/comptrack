@@ -12,10 +12,13 @@ import {
   FileText,
   Settings,
   TrendingUp,
+  TrendingDown,
   LogOut,
   Menu,
   X,
   Bell,
+  GraduationCap,
+  Truck,
 } from "lucide-react";
 
 interface NavItem {
@@ -29,7 +32,10 @@ const navItems: NavItem[] = [
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/rapports", label: "Rapports", icon: BarChart3 },
   { href: "/clients", label: "Clients", icon: Users },
+  { href: "/fournisseurs", label: "Fournisseurs", icon: Truck },
+  { href: "/depenses", label: "Dépenses", icon: TrendingDown },
   { href: "/factures", label: "Factures", icon: FileText },
+  { href: "/apprendre", label: "Apprendre", icon: GraduationCap },
   { href: "/parametres", label: "Paramètres", icon: Settings },
 ];
 
@@ -125,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           SD
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">Steve Donald</p>
+          <p className="text-sm font-medium truncate">Steeve Donald</p>
           <p className="text-xs truncate" style={{ color: "var(--text3)" }}>
             Mon Commerce
           </p>

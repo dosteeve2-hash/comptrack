@@ -30,7 +30,7 @@ export interface Facture {
   montant: number;
   dateCreation: string;
   dateEcheance: string;
-  statut: "payee" | "en_attente" | "retard";
+  statut: "brouillon" | "envoyee" | "en_attente" | "payee" | "retard";
   articles: FactureArticle[];
 }
 
