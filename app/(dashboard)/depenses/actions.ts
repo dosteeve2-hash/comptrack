@@ -42,6 +42,7 @@ export async function createDepenseAction(data: DepenseFormData): Promise<Action
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/depenses')
     return { success: true }
   } catch {
@@ -81,6 +82,7 @@ export async function updateDepenseAction(
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/depenses')
     return { success: true }
   } catch {

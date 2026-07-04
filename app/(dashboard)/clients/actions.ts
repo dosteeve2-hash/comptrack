@@ -35,6 +35,7 @@ export async function createClientAction(data: ClientFormData): Promise<ActionRe
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/clients')
     return { success: true }
   } catch {
@@ -66,6 +67,7 @@ export async function updateClientAction(
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/clients')
     return { success: true }
   } catch {

@@ -37,6 +37,7 @@ export async function createFournisseurAction(data: FournisseurFormData): Promis
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/fournisseurs')
     return { success: true }
   } catch {
@@ -69,6 +70,7 @@ export async function updateFournisseurAction(
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/fournisseurs')
     return { success: true }
   } catch {

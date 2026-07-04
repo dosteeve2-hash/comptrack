@@ -45,6 +45,7 @@ export async function createRevenuAction(data: RevenuFormData): Promise<ActionRe
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/revenus')
     return { success: true }
   } catch {
@@ -87,6 +88,7 @@ export async function updateRevenuAction(
 
     if (error) return { success: false, error: error.message }
 
+    await new Promise(resolve => setTimeout(resolve, 300))
     revalidatePath('/revenus')
     return { success: true }
   } catch {
