@@ -101,9 +101,12 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 interface DashboardClientProps {
   monthlySummary?: React.ReactNode;
   revenueChart?: React.ReactNode;
+  kpiSummary?: React.ReactNode;
+  activityFeed?: React.ReactNode;
+  revenusDepensesChart?: React.ReactNode;
 }
 
-export default function DashboardClient({ monthlySummary, revenueChart }: DashboardClientProps) {
+export default function DashboardClient({ monthlySummary, revenueChart, kpiSummary, activityFeed, revenusDepensesChart }: DashboardClientProps) {
   const [mounted, setMounted] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -416,6 +419,9 @@ export default function DashboardClient({ monthlySummary, revenueChart }: Dashbo
         </Link>
       </div>
 
+      {/* ─── KPIs globaux temps réel (Server Component) ─────────────────── */}
+      {kpiSummary}
+
       {/* ─── Widget Résumé du mois (Server Component) ────────────────────── */}
       {monthlySummary}
 
@@ -457,8 +463,8 @@ export default function DashboardClient({ monthlySummary, revenueChart }: Dashbo
         ))}
       </div>
 
-      {/* ─── Évolution mensuelle (Server Component via Suspense) ──────────── */}
-      {revenueChart && (
+      {/* ─── Évolution mensuelle ─────────────────────────────────────────── */}
+      {(revenusDepensesChart ?? revenueChart) && (
         <div
           className="p-6 rounded-2xl border"
           style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
@@ -487,7 +493,7 @@ export default function DashboardClient({ monthlySummary, revenueChart }: Dashbo
               </span>
             </div>
           </div>
-          {revenueChart}
+          {revenusDepensesChart ?? revenueChart}
         </div>
       )}
 
@@ -635,37 +641,39 @@ export default function DashboardClient({ monthlySummary, revenueChart }: Dashbo
             Voir tout →
           </Link>
         </div>
-        <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-          {recentTransactions.map((tx) => (
-            <div key={tx.id} className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] transition-colors">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: tx.type === "revenu" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
-                }}
-              >
-                {tx.type === "revenu" ? (
-                  <ArrowUpRight className="w-4 h-4" style={{ color: "var(--green)" }} />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4" style={{ color: "var(--red)" }} />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{tx.description}</p>
-                <p className="text-xs truncate" style={{ color: "var(--text2)" }}>
-                  {tx.categorie} · {formatDate(tx.date)}
+        {activityFeed ?? (
+          <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+            {recentTransactions.map((tx) => (
+              <div key={tx.id} className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] transition-colors">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: tx.type === "revenu" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+                  }}
+                >
+                  {tx.type === "revenu" ? (
+                    <ArrowUpRight className="w-4 h-4" style={{ color: "var(--green)" }} />
+                  ) : (
+                    <ArrowDownRight className="w-4 h-4" style={{ color: "var(--red)" }} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{tx.description}</p>
+                  <p className="text-xs truncate" style={{ color: "var(--text2)" }}>
+                    {tx.categorie} · {formatDate(tx.date)}
+                  </p>
+                </div>
+                <p
+                  className="text-sm font-bold font-mono flex-shrink-0"
+                  style={{ color: tx.type === "revenu" ? "var(--green)" : "var(--red)" }}
+                >
+                  {tx.type === "revenu" ? "+" : "-"}
+                  {formatMontant(tx.montant)}
                 </p>
               </div>
-              <p
-                className="text-sm font-bold font-mono flex-shrink-0"
-                style={{ color: tx.type === "revenu" ? "var(--green)" : "var(--red)" }}
-              >
-                {tx.type === "revenu" ? "+" : "-"}
-                {formatMontant(tx.montant)}
-              </p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
