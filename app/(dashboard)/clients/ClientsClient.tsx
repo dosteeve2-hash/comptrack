@@ -13,7 +13,9 @@ import {
   Check,
   AlertCircle,
   Users,
+  Download,
 } from 'lucide-react'
+import { exportToCSV } from '@/utils/exportCsv'
 import { createClientAction, updateClientAction } from './actions'
 import type { ClientFormData } from './actions'
 import { formatDate } from '@/lib/utils'
@@ -191,14 +193,24 @@ export default function ClientsClient({ initialClients }: Props) {
             {filtered.length} client{filtered.length !== 1 ? 's' : ''} affiché{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-          style={{ background: 'var(--green)', color: '#000' }}
-        >
-          <UserPlus className="w-4 h-4" />
-          Nouveau client
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportToCSV(filtered.map(i => ({ ...i })), 'clients')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+            style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}
+          >
+            <Download className="w-4 h-4" />
+            Exporter CSV
+          </button>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{ background: 'var(--green)', color: '#000' }}
+          >
+            <UserPlus className="w-4 h-4" />
+            Nouveau client
+          </button>
+        </div>
       </div>
 
       {/* ── Stats ── */}

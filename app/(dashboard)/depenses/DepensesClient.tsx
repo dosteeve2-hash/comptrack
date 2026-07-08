@@ -12,7 +12,9 @@ import {
   TrendingDown,
   Tag,
   FileText,
+  Download,
 } from 'lucide-react'
+import { exportToCSV } from '@/utils/exportCsv'
 import { createDepenseAction, updateDepenseAction } from './actions'
 import type { DepenseFormData } from './actions'
 import { formatDate } from '@/lib/utils'
@@ -189,14 +191,24 @@ export default function DepensesClient({ initialDepenses }: Props) {
             {filtered.length} dépense{filtered.length !== 1 ? 's' : ''} affichée{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-          style={{ background: 'var(--red)', color: '#fff' }}
-        >
-          <Plus className="w-4 h-4" />
-          Nouvelle dépense
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportToCSV(filtered.map(i => ({ ...i })), 'depenses')}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+            style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}
+          >
+            <Download className="w-4 h-4" />
+            Exporter CSV
+          </button>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{ background: 'var(--red)', color: '#fff' }}
+          >
+            <Plus className="w-4 h-4" />
+            Nouvelle dépense
+          </button>
+        </div>
       </div>
 
       {/* ── Stats ── */}
