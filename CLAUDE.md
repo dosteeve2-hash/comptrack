@@ -107,5 +107,28 @@ npm run lint     # Lint ESLint
 
 ---
 
-*Dernière mise à jour : 2026-06-27*
+---
+
+## Déploiement
+
+**URL production :** https://comptrack-chi.vercel.app
+
+**Plateforme :** Vercel (projet `comptrack`, org `dosteeve2-8163s-projects`)
+**Repo :** https://github.com/dosteeve2-hash/comptrack
+
+### Variables d'environnement à configurer sur vercel.com
+
+Dans Settings → Environment Variables du projet Vercel :
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de ton projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique anon de Supabase |
+
+Sans ces variables, l'auth Supabase ne fonctionnera pas en prod.
+Le code gère l'absence avec des valeurs placeholder pour que le build passe.
+
+---
+
+*Dernière mise à jour : 2026-07-08*
 *Maintenu par Steeve Donald Compaoré*
