@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/factures", label: "Factures", icon: FileText },
   { href: "/apprendre", label: "Apprendre", icon: GraduationCap },
+  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/parametres", label: "Paramètres", icon: Settings },
 ];
 

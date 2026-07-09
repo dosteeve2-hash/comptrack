@@ -33,6 +33,52 @@ import {
   kpisMoisActuel,
 } from "@/lib/data";
 import { formatMontant, formatDate, calcVariation } from "@/lib/utils";
+import FeedActivite, { type ActiviteItem } from "@/app/(dashboard)/activite/FeedActivite";
+
+const mockActivites: ActiviteItem[] = [
+  {
+    id: "mock-1",
+    type: "revenu",
+    description: "Vente de marchandises — Boutique Aminata",
+    montant: 450000,
+    created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-2",
+    type: "depense",
+    description: "Achat stock tissu ankara — Grossiste Ouaga",
+    montant: 185000,
+    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-3",
+    type: "objectif",
+    description: "Objectif \"Chiffre d'affaires 5M FCFA\" atteint à 78%",
+    montant: null,
+    created_at: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-4",
+    type: "revenu",
+    description: "Prestation de service — Client Koné & Frères",
+    montant: 320000,
+    created_at: new Date(Date.now() - 50 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-5",
+    type: "export",
+    description: "Export rapport mensuel juin 2026 (PDF)",
+    montant: null,
+    created_at: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-6",
+    type: "depense",
+    description: "Loyer local commercial — Juillet 2026",
+    montant: 120000,
+    created_at: new Date(Date.now() - 96 * 60 * 60 * 1000).toISOString(),
+  },
+];
 
 // ─── Types onboarding ─────────────────────────────────────────────────────────
 
@@ -587,6 +633,14 @@ export default function DashboardPage() {
             <div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
           )}
         </div>
+      </div>
+
+      {/* ─── Activité récente ─────────────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold">Activité récente</h3>
+        </div>
+        <FeedActivite activites={mockActivites} />
       </div>
 
       {/* Recent transactions */}
