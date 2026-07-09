@@ -12,6 +12,7 @@ import {
   FileText,
   Settings,
   TrendingUp,
+  TrendingDown,
   LogOut,
   Menu,
   X,
@@ -28,6 +29,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/depenses", label: "Dépenses", icon: TrendingDown },
   { href: "/rapports", label: "Rapports", icon: BarChart3 },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/factures", label: "Factures", icon: FileText },
