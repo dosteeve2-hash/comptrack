@@ -17,6 +17,7 @@ import {
   X,
   Bell,
   GraduationCap,
+  Target,
 } from "lucide-react";
 
 interface NavItem {
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/factures", label: "Factures", icon: FileText },
   { href: "/apprendre", label: "Apprendre", icon: GraduationCap },
+  { href: "/objectifs", label: "Objectifs", icon: Target },
   { href: "/parametres", label: "Paramètres", icon: Settings },
 ];
 
