@@ -31,9 +31,13 @@ const navItems: NavItem[] = [
   { href: "/rapports", label: "Rapports", icon: BarChart3 },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/factures", label: "Factures", icon: FileText },
+  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/apprendre", label: "Apprendre", icon: GraduationCap },
   { href: "/parametres", label: "Paramètres", icon: Settings },
 ];
+
+// Nombre de notifications non lues (mock statique — sera hydraté côté client si besoin)
+const NOTIFS_NON_LUES = 3;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -83,6 +87,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   style={{ background: "rgba(239,68,68,0.15)", color: "var(--red)" }}
                 >
                   1
+                </span>
+              )}
+              {item.label === "Notifications" && NOTIFS_NON_LUES > 0 && (
+                <span
+                  className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-full font-bold"
+                  style={{ background: "#D4AF37", color: "#0A1628" }}
+                >
+                  {NOTIFS_NON_LUES}
                 </span>
               )}
             </Link>
@@ -193,16 +205,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Link
+              href="/notifications"
               className="relative p-2 rounded-lg transition-all hover:opacity-70"
               style={{ color: "var(--text2)" }}
+              title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span
-                className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full"
-                style={{ background: "var(--red)" }}
-              />
-            </button>
+              {NOTIFS_NON_LUES > 0 && (
+                <span
+                  className="absolute top-1 right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[10px] font-bold px-1"
+                  style={{ background: "#D4AF37", color: "#0A1628" }}
+                >
+                  {NOTIFS_NON_LUES}
+                </span>
+              )}
+            </Link>
             <button
               className="md:hidden p-1.5 rounded-lg"
               style={{ color: "var(--text2)" }}
