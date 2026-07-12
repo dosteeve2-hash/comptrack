@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import PersonnalisationCard from './PersonnalisationCard'
 
 export default async function ParametresPage() {
   const supabase = await createClient()
@@ -33,6 +34,9 @@ export default async function ParametresPage() {
           </div>
         </div>
       </div>
+
+      {/* Personnalisation — stockée en local sur l'appareil */}
+      <PersonnalisationCard />
 
       {/* Devise */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
