@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // Fix: silence workspace root warning from multiple lockfiles
   outputFileTracingRoot: process.cwd(),
   async headers() {
     return [
@@ -21,4 +21,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: "forge-afrika",
+  project: "comptrack",
+});

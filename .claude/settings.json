@@ -1,0 +1,30 @@
+﻿{
+  "hooks": {
+    "PreToolCall": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/protect-env.sh \"$TOOL_INPUT_PATH\""
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-file-size.sh \"$TOOL_INPUT_PATH\""
+          }
+        ]
+      }
+    ],
+    "PostToolCall": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/auto-format.sh \"$TOOL_INPUT_PATH\""
+          }
+        ]
+      }
+    ]
+  }
+}
