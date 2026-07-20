@@ -231,3 +231,17 @@ Utiliser des delimiteurs XML : <user_input>${userText}</user_input>
 - getUser() TOUJOURS cote serveur
 - getSession() JAMAIS cote serveur
 - Valider l'utilisateur dans chaque Server Action
+
+### God File anti-pattern
+- 1 fichier = 1 responsabilite
+- Decouper tout fichier qui depasse 250 lignes
+
+### Fichiers d'environnement
+- Ne jamais modifier .env, .env.local ou .env.production directement
+
+## Règles IA sécurité (CRITIQUE)
+
+- Rate limit sur TOUS les endpoints AI : 20 req/user/heure max
+- Ne jamais passer l'input user dans le system prompt — toujours : <user_input>${input}</user_input>
+- God File anti-pattern : 1 fichier = 1 responsabilité, découper à 250 lignes
+- Ne jamais modifier .env, .env.local, .env.production directement
