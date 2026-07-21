@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LenisProvider } from "@/components/providers/LenisProvider";
 
 export const metadata: Metadata = {
   title: "CompTrack — Comptabilité SaaS pour PME africaines",
@@ -13,8 +14,7 @@ export const metadata: Metadata = {
   authors: [{ name: "FORGE Afrika" }],
   openGraph: {
     title: "CompTrack — Comptabilité SaaS pour PME africaines",
-    description:
-      "La comptabilité simple pour les PME africaines. FCFA, OHADA, factures automatiques.",
+    description: "La comptabilité simple pour les PME africaines. FCFA, OHADA, factures automatiques.",
     type: "website",
     siteName: "CompTrack",
   },
@@ -29,7 +29,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <LenisProvider>
+          {children}
+        </LenisProvider>
+      </body>
     </html>
   );
 }

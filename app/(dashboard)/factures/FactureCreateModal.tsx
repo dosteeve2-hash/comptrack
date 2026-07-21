@@ -4,7 +4,7 @@ import { clients } from '@/lib/data'
 import type { FactureArticle } from '@/lib/data'
 import { formatMontant } from '@/lib/utils'
 import type { NewFactureForm } from './factures.types'
-import { defaultArticle } from './factures.types'
+import { defaultArticle, tvaAmt, tvaTTC } from './factures.types'
 
 const INPUT_STYLE = {
   background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)',
@@ -126,13 +126,22 @@ export function FactureCreateModal({
             </div>
           </div>
 
-          {/* Total */}
-          <div className="flex justify-between items-center p-3 rounded-xl"
+          {/* Total HT → TVA → TTC */}
+          <div className="p-4 rounded-xl space-y-1.5"
             style={{ background: 'var(--bg3)', border: '1px solid var(--border)' }}>
-            <span className="font-semibold">Total facture</span>
-            <span className="font-bold font-mono text-lg" style={{ color: 'var(--green)' }}>
-              {formatMontant(totalFacture)}
-            </span>
+            <div className="flex justify-between text-sm" style={{ color: 'var(--text2)' }}>
+              <span>Sous-total HT</span>
+              <span className="font-mono">{formatMontant(totalFacture)}</span>
+            </div>
+            <div className="flex justify-between text-sm" style={{ color: 'var(--text2)' }}>
+              <span>TVA 18%</span>
+              <span className="font-mono">{formatMontant(tvaAmt(totalFacture))}</span>
+            </div>
+            <div className="flex justify-between font-bold text-base pt-2 border-t"
+              style={{ borderColor: 'var(--border2)', color: 'var(--green)' }}>
+              <span>TOTAL TTC</span>
+              <span className="font-mono">{formatMontant(tvaTTC(totalFacture))}</span>
+            </div>
           </div>
 
           {formError && (

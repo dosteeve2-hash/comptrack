@@ -2,7 +2,19 @@
 import { donneesMensuelles, factures, kpisMoisActuel } from '@/lib/data'
 
 export type Periode    = 'mensuel' | 'trimestriel' | 'annuel'
-export type VueRapport = 'apercu' | 'bilan' | 'resultat'
+export type VueRapport = 'apercu' | 'bilan' | 'resultat' | 'fiscal'
+
+// ─── TVA Burkina Faso ─────────────────────────────────────────────────────────
+export const TVA_RATE         = 0.18
+export const TVA_DEDUC_FACTOR = 0.60   // 60 % des achats ouvrent droit à déduction
+
+export const donneesTVAMensuelles = donneesMensuelles.map((m) => ({
+  mois:          m.mois,
+  caHT:          m.revenus,
+  tvaCollectee:  Math.round(m.revenus   * TVA_RATE),
+  tvaDeductible: Math.round(m.depenses  * TVA_RATE * TVA_DEDUC_FACTOR),
+  netAReverser:  Math.round(m.revenus   * TVA_RATE - m.depenses * TVA_RATE * TVA_DEDUC_FACTOR),
+}))
 
 export interface LigneBilan {
   libelle: string

@@ -7,7 +7,12 @@ export const statutConfig: Record<Facture['statut'], { label: string; bg: string
   en_attente: { label: 'En attente', bg: 'rgba(245,158,11,0.1)',  color: 'var(--amber)' },
   payee:      { label: 'Payée',      bg: 'rgba(34,197,94,0.1)',   color: 'var(--green)' },
   retard:     { label: 'En retard',  bg: 'rgba(239,68,68,0.1)',   color: 'var(--red)'   },
+  annulee:    { label: 'Annulée',    bg: 'rgba(75,85,99,0.12)',   color: 'var(--text3)' },
 }
+
+export const TVA_RATE = 0.18
+export const tvaAmt = (ht: number) => Math.round(ht * TVA_RATE)
+export const tvaTTC = (ht: number) => ht + Math.round(ht * TVA_RATE)
 
 export const statutSuivant: Partial<Record<Facture['statut'], Facture['statut']>> = {
   brouillon:  'envoyee',

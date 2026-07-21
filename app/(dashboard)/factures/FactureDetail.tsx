@@ -2,7 +2,7 @@
 import { X, Download } from 'lucide-react'
 import type { Facture } from '@/lib/data'
 import { formatMontant, formatDate } from '@/lib/utils'
-import { statutConfig } from './factures.types'
+import { statutConfig, tvaAmt, tvaTTC } from './factures.types'
 
 export function FactureDetail({
   facture,
@@ -88,15 +88,25 @@ export function FactureDetail({
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              <tr className="border-t" style={{ borderColor: 'var(--border2)' }}>
-                <td colSpan={3} className="py-3 font-bold text-right">TOTAL</td>
-                <td className="py-3 text-right font-bold font-mono text-lg" style={{ color: 'var(--green)' }}>
-                  {formatMontant(facture.montant)}
-                </td>
-              </tr>
-            </tfoot>
           </table>
+
+          {/* Récap TVA */}
+          <div className="ml-auto max-w-xs space-y-1.5 mb-6 p-4 rounded-xl"
+            style={{ background: 'var(--bg3)', border: '1px solid var(--border)' }}>
+            <div className="flex justify-between text-sm" style={{ color: 'var(--text2)' }}>
+              <span>Sous-total HT</span>
+              <span className="font-mono">{formatMontant(facture.montant)}</span>
+            </div>
+            <div className="flex justify-between text-sm" style={{ color: 'var(--text2)' }}>
+              <span>TVA 18%</span>
+              <span className="font-mono">{formatMontant(tvaAmt(facture.montant))}</span>
+            </div>
+            <div className="flex justify-between font-bold text-base pt-2 border-t"
+              style={{ borderColor: 'var(--border2)', color: 'var(--green)' }}>
+              <span>TOTAL TTC</span>
+              <span className="font-mono">{formatMontant(tvaTTC(facture.montant))}</span>
+            </div>
+          </div>
 
           <p className="text-xs text-center" style={{ color: 'var(--text2)' }}>
             Merci pour votre confiance · Paiement par virement ou mobile money

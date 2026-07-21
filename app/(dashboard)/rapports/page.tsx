@@ -3,16 +3,18 @@
 // app/(dashboard)/rapports/page.tsx
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Download, Scale, TrendingUp, BookOpen } from 'lucide-react'
+import { Download, Scale, TrendingUp, BookOpen, Calculator } from 'lucide-react'
 import type { VueRapport } from './rapports.data'
 import { RapportsBilan }   from './RapportsBilan'
 import { RapportsResultat } from './RapportsResultat'
 import { RapportsApercu }  from './RapportsApercu'
+import { RapportsFiscal }  from './RapportsFiscal'
 
 const TABS: Array<{ id: VueRapport; label: string; icon: LucideIcon }> = [
   { id: 'apercu',   label: 'Aperçu',              icon: TrendingUp },
   { id: 'bilan',    label: 'Bilan',               icon: Scale      },
   { id: 'resultat', label: 'Compte de résultat',  icon: BookOpen   },
+  { id: 'fiscal',   label: 'Rapport fiscal',      icon: Calculator },
 ]
 
 export default function RapportsPage() {
@@ -55,6 +57,7 @@ export default function RapportsPage() {
       {vueRapport === 'bilan'    && <RapportsBilan />}
       {vueRapport === 'resultat' && <RapportsResultat />}
       {vueRapport === 'apercu'   && <RapportsApercu />}
+      {vueRapport === 'fiscal'   && <RapportsFiscal />}
     </div>
   )
 }
