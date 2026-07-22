@@ -135,7 +135,7 @@ export function DashboardOnboarding({
               <Building2 className="w-5 h-5" style={{ color: 'var(--green)' }} />
               <span className="font-bold">Configurons votre entreprise</span>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:opacity-70" style={{ color: 'var(--text2)' }}>
+            <button onClick={onClose} aria-label="Fermer" className="p-1.5 rounded-lg hover:opacity-70" style={{ color: 'var(--text2)' }}>
               <X className="w-4 h-4" />
             </button>
           </div>

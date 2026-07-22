@@ -96,19 +96,24 @@ export function TestimonialsSection() {
           {/* Controls */}
           <div className="flex items-center gap-4 mt-8">
             <button onClick={prev}
+              aria-label="Témoignage précédent"
               className="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
               style={{ background: 'var(--bg3)', border: '1px solid var(--border2)' }}>
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div className="flex gap-2 items-center">
               {TESTIMONIALS.map((_, i) => (
-                <button key={i} onClick={() => { setDir(i > idx ? 1 : -1); setIdx(i) }}
+                <button key={i}
+                  onClick={() => { setDir(i > idx ? 1 : -1); setIdx(i) }}
+                  aria-label={`Aller au témoignage ${i + 1}`}
+                  aria-current={i === idx ? 'true' : undefined}
                   className="rounded-full transition-all duration-300"
                   style={{ width: i === idx ? '24px' : '8px', height: '8px',
                     background: i === idx ? 'var(--gold)' : 'var(--border2)' }} />
               ))}
             </div>
             <button onClick={next}
+              aria-label="Témoignage suivant"
               className="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
               style={{ background: 'var(--bg3)', border: '1px solid var(--border2)' }}>
               <ChevronRight className="w-5 h-5" />

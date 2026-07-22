@@ -72,6 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
           <button className="md:hidden p-1.5 rounded-lg transition-all hover:opacity-70"
             style={{ color: 'var(--text2)' }}
+            aria-label="Ouvrir le menu"
             onClick={() => setSidebarOpen(true)}>
             <Menu className="w-5 h-5" />
           </button>
@@ -92,6 +93,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </span>
             </Link>
             <button className="md:hidden p-1.5 rounded-lg" style={{ color: 'var(--text2)' }}
+              aria-label="Fermer le menu"
               onClick={() => setSidebarOpen(false)}>
               {sidebarOpen && <X className="w-5 h-5" />}
             </button>

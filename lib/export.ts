@@ -18,8 +18,8 @@ export function transactionsToCSV(transactions: Transaction[]): string {
     "Statut",
   ];
 
-  const escapeCell = (value: string | number | undefined): string => {
-    const str = value === undefined || value === null ? "" : String(value);
+  const escapeCell = (value: string | number | null | undefined): string => {
+    const str = value == null ? "" : String(value);
     // Encapsuler entre guillemets si virgule, guillemet ou saut de ligne présents
     if (str.includes(",") || str.includes('"') || str.includes("\n")) {
       return `"${str.replace(/"/g, '""')}"`;

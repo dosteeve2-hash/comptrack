@@ -26,7 +26,7 @@ export function AnimatedCounter({
     if (!isInView || animated.current || !ref.current) return
     animated.current = true
     const obj = { value: 0 }
-    gsap.to(obj, {
+    const tween = gsap.to(obj, {
       value: target,
       duration,
       ease: 'power2.out',
@@ -36,6 +36,7 @@ export function AnimatedCounter({
         }
       },
     })
+    return () => { tween.kill() }
   }, [isInView, target, duration, suffix, prefix])
 
   return (

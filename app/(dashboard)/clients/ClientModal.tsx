@@ -28,7 +28,7 @@ export function ClientModal({
         style={{ background: 'var(--bg2)', border: '1px solid var(--border2)' }}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold">Nouveau contact</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:opacity-70" style={{ color: 'var(--text2)' }}>
+          <button onClick={onClose} aria-label="Fermer" className="p-1.5 rounded-lg hover:opacity-70" style={{ color: 'var(--text2)' }}>
             <X className="w-5 h-5" />
           </button>
         </div>

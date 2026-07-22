@@ -92,7 +92,8 @@ export function LayoutSidebar({ pathname, prefs, onClose, onSignOut }: SidebarPr
         <button onClick={onSignOut}
           className="p-1.5 rounded-lg transition-all hover:opacity-70"
           style={{ color: 'var(--text2)' }}
-          title="Déconnexion">
+          title="Déconnexion"
+          aria-label="Déconnexion">
           <LogOut className="w-4 h-4" />
         </button>
       </div>
