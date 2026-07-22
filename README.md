@@ -1,162 +1,136 @@
-# CompTrack
+# 📊 CompTrack
 
-<div align="center">
+> La comptabilité B2B pensée pour les PMEs africaines — simple, fiable, conforme.
 
-![CompTrack Banner](https://img.shields.io/badge/CompTrack-La_comptabilité_africaine-22c55e?style=for-the-badge&labelColor=0d1117)
-
-**La comptabilité simple pour les entreprises africaines**
-
-[![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_3-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
-[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
-[![License MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![FORGE Afrika](https://img.shields.io/badge/FORGE_Afrika-Produit-22c55e?style=flat-square)](https://github.com/dosteeve2-hash)
-
-</div>
+![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge&color=0A1628)
+![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![Next.js](https://img.shields.io/badge/Next.js_15-black?style=for-the-badge&logo=next.js)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 
 ---
 
-## Pourquoi CompTrack ?
+## 🎯 Problème résolu
 
-Les TPE/PME africaines gèrent encore leurs finances dans des **cahiers** ou des **fichiers Excel désordonnés**. Les solutions existantes (Sage, QuickBooks) coûtent cher, sont en anglais, et ne correspondent pas aux réalités locales.
+Les PMEs africaines n'ont pas accès à des logiciels comptables adaptés à leur contexte : les solutions occidentales sont trop complexes, trop chères et non conformes aux normes locales (SYSCOHADA). Résultat : comptabilité approximative, impossibilité d'obtenir des financements, décisions stratégiques prises à l'aveugle.
 
-**CompTrack** est né pour combler ce vide :
-- ✅ 100% en français
-- ✅ Montants en FCFA et autres devises africaines
-- ✅ Interface simple — aucune formation comptable requise
-- ✅ Offline-first — fonctionne sans connexion internet
-- ✅ Gratuit pour commencer
+## 💡 Solution
 
----
+CompTrack est un logiciel de comptabilité B2B cloud conçu pour les PMEs africaines. Il couvre la gestion complète des clients, fournisseurs, factures, dépenses et revenus, avec des tableaux de bord financiers clairs, des prévisions intelligentes et des rapports exportables — sans nécessiter de formation comptable avancée.
 
-## Fonctionnalités MVP
-
-| Fonctionnalité | Description |
-|---|---|
-| **Tableau de bord** | KPIs en temps réel : solde, revenus, dépenses, bénéfice net |
-| **Transactions** | Enregistrement rapide avec catégories personnalisables |
-| **Rapports** | Graphiques mensuels, trimestriels et annuels |
-| **Clients & Fournisseurs** | Carnet d'adresses avec historique |
-| **Factures** | Création et export PDF en 30 secondes |
-| **Paramètres** | Catégories personnalisées, profil entreprise |
+**Cible :** Dirigeants de PMEs, comptables et DAF d'entreprises africaines de 5 à 200 employés.
 
 ---
 
-## Stack technique
+## 🖥️ Pages & Fonctionnalités
 
-```
-Frontend   : Next.js 15 (App Router) + TypeScript strict
-Styling    : Tailwind CSS v3 + design system CompTrack
-Charts     : Recharts
-Icons      : Lucide React
-Backend    : Supabase (Auth + PostgreSQL + Storage)
-Deploy     : Vercel
-```
+| Page | Description |
+|------|-------------|
+| `/` — Dashboard | Synthèse financière : trésorerie, revenus/dépenses du mois, alertes |
+| `/clients` | Gestion du portefeuille clients — fiches, historique, encours de facturation |
+| `/fournisseurs` | Carnet fournisseurs — contacts, conditions de paiement, historique achats |
+| `/factures` | Création, envoi et suivi des factures — statuts, relances automatiques |
+| `/revenus` | Journal des revenus — catégorisation, graphiques d'évolution |
+| `/depenses` | Suivi des dépenses — catégories, justificatifs, validation |
+| `/objectifs` | Définition et suivi d'objectifs financiers par période |
+| `/previsions` | Prévisions de trésorerie et projections financières intelligentes |
+| `/rapports` | Génération de rapports comptables (bilan, compte de résultat, flux) |
+| `/notifications` | Centre d'alertes : factures en retard, seuils atteints, échéances |
 
 ---
 
-## Installation
+## 🛠️ Stack Technique
+
+| Couche | Technologie |
+|--------|------------|
+| Framework | Next.js 15 (App Router) |
+| Langage | TypeScript |
+| Styles | Tailwind CSS |
+| Animations | Framer Motion |
+| Base de données | Supabase (PostgreSQL + Auth + Storage) |
+| Déploiement | Vercel |
+| UI Components | shadcn/ui |
+
+**Charte graphique :** Navy `#0A1628` · Gold `#D4AF37` · Cyan `#00BCD4`
+
+---
+
+## 🚀 Installation
 
 ```bash
-# Cloner le repo
 git clone https://github.com/dosteeve2-hash/comptrack.git
 cd comptrack
-
-# Installer les dépendances
 npm install
-
-# Variables d'environnement (copier et compléter)
 cp .env.example .env.local
-
-# Lancer en développement
-npm run dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000)
-
----
-
-## Variables d'environnement
+Configure les variables dans `.env.local` :
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-> Pour le MVP, CompTrack fonctionne sans Supabase avec des données locales.
+```bash
+npm run dev
+# → http://localhost:3000
+```
 
 ---
 
-## Structure du projet
+## 📁 Structure du Projet
 
 ```
 comptrack/
 ├── app/
-│   ├── page.tsx                    # Landing page
-│   ├── (auth)/
-│   │   ├── connexion/page.tsx      # Connexion
-│   │   └── inscription/page.tsx   # Inscription
-│   └── (dashboard)/
-│       ├── layout.tsx              # Sidebar navigation
-│       ├── dashboard/page.tsx      # KPIs + graphiques
-│       ├── transactions/page.tsx   # Liste + formulaire
-│       ├── rapports/page.tsx       # Rapports et analyses
-│       ├── clients/page.tsx        # Carnet clients
-│       ├── factures/page.tsx       # Factures PDF
-│       └── parametres/page.tsx    # Paramètres
+│   ├── (dashboard)/
+│   │   ├── clients/
+│   │   ├── fournisseurs/
+│   │   ├── factures/
+│   │   ├── revenus/
+│   │   ├── depenses/
+│   │   ├── objectifs/
+│   │   ├── previsions/
+│   │   ├── rapports/
+│   │   └── notifications/
+│   └── layout.tsx
+├── components/
+│   ├── ui/
+│   ├── finance/
+│   └── shared/
 ├── lib/
-│   ├── data.ts                     # Données et types
-│   └── utils.ts                    # Utilitaires
-└── ...
+│   ├── supabase/
+│   └── utils/
+├── public/
+└── types/
 ```
 
 ---
 
-## Design System CompTrack
+## 🌍 Partie de l'écosystème FORGE Afrika
 
-| Token | Couleur | Usage |
-|---|---|---|
-| `--green` | `#22c55e` | Revenus, croissance, CTAs |
-| `--blue` | `#3b82f6` | Actions, liens, confiance |
-| `--red` | `#ef4444` | Dépenses, alertes |
-| `--amber` | `#f59e0b` | En attente, neutre |
-| `--bg` | `#0d1117` | Fond principal |
+CompTrack est un produit de **[FORGE Afrika](https://github.com/dosteeve2-hash/forge-afrika)** — la forge technologique panafricaine qui construit les outils numériques de la prochaine génération d'entrepreneurs africains.
 
----
+> *Forger l'Afrique de demain, un produit à la fois.*
 
-## Roadmap
-
-- [ ] Intégration Supabase complète (Auth + DB)
-- [ ] Mode offline avec sync automatique
-- [ ] Export Excel des transactions
-- [ ] Multi-devises (FCFA, GHS, NGN, KES)
-- [ ] Application mobile (React Native)
-- [ ] Intégration paiement mobile money (Orange, MTN)
-- [ ] API pour intégration ERP
+**Autres produits de l'écosystème :**
+- 🏭 [TAAMA](https://github.com/dosteeve2-hash/taama) — ERP industriel pour PMEs de transformation
+- 🌱 [FORJA](https://github.com/dosteeve2-hash/forja) — Plateforme SaaS d'exportation de café burkinabè
+- 🛍️ [MIFA Life](https://github.com/dosteeve2-hash/Mifa_Life_shop) — Marketplace de produits locaux africains
 
 ---
 
-## Contexte — FORGE Afrika
+## 📬 Contact
 
-CompTrack fait partie de l'écosystème **FORGE Afrika** — une famille de produits tech conçus pour les entreprises et entrepreneurs africains.
+**Steve Donald Compaore** — Fondateur, FORGE Afrika
 
-> **Vision** : Des logiciels simples, puissants, adaptés aux réalités africaines — pour que chaque entrepreneur du continent puisse gérer son business comme une entreprise mondiale.
-
----
-
-## Auteur
-
-**Steve Donald Compaoré** — Étudiant en Software Engineering, Université GOP Tokat, Turquie.
-
-- 🌍 Burkina Faso / Turquie
-- 🐙 [@dosteeve2-hash](https://github.com/dosteeve2-hash)
-- 💼 [Portfolio](https://steeve-portfolio-mocha.vercel.app)
+📧 [docompaore2@gmail.com](mailto:docompaore2@gmail.com)
+🐙 [github.com/dosteeve2-hash](https://github.com/dosteeve2-hash)
 
 ---
 
 <div align="center">
-
-Si ce projet vous inspire, laissez une ⭐ — **Fait avec ❤️ depuis Ouagadougou et Istanbul**
-
+  <sub>Construit avec ❤️ au Burkina Faso · FORGE Afrika © 2025</sub>
 </div>

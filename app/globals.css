@@ -2,74 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg: #0d1117;
-  --bg2: #161b22;
-  --bg3: #1c2333;
-  --text: #e6edf3;
-  --text2: #8b949e;
-  --text3: #4e5f82;
-  --green: #22c55e;
+  --navy:   #0A1628;
+  --gold:   #D4AF37;
+  --gold2:  #B8962A;
+  --cyan:   #00BCD4;
+  --cyan2:  #0097A7;
+  --bg:     #0A1628;
+  --bg2:    #0e1f3d;
+  --bg3:    #142b52;
+  --text:   #EBF4FF;
+  --text2:  #8BABC9;
+  --text3:  #4E6F8E;
+  --green:  #22c55e;
   --green2: #16a34a;
-  --blue: #3b82f6;
-  --blue2: #2563eb;
-  --red: #ef4444;
-  --amber: #f59e0b;
-  --border: #21262d;
-  --border2: #30363d;
+  --red:    #ef4444;
+  --amber:  #f59e0b;
+  --blue:   #3b82f6;
+  --border:  #1a3357;
+  --border2: #2a4a72;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
   background-color: var(--bg);
   color: var(--text);
   font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+/* ── Scrollbar ─────────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+::selection { background-color: var(--gold); color: var(--navy); }
+
+/* ── Keyframes ─────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
 }
-::-webkit-scrollbar-track {
-  background: var(--bg2);
+@keyframes btnGradient {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
-::-webkit-scrollbar-thumb {
-  background: var(--green);
-  border-radius: 2px;
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(212,175,55,0.35); }
+  50%       { box-shadow: 0 0 45px rgba(212,175,55,0.7); }
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes gradientBg {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+@keyframes rotateBg {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Text selection */
-::selection {
-  background-color: var(--green);
-  color: var(--bg);
+/* ── Glow Button Gold ──────────────────────────────── */
+.glow-btn-gold {
+  position: relative;
+  background: linear-gradient(135deg, #D4AF37 0%, #f0cc5a 40%, #B8962A 60%, #D4AF37 100%);
+  background-size: 200% auto;
+  animation: btnGradient 3s linear infinite, pulseGlow 2.5s ease-in-out infinite;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.glow-btn-gold:hover { transform: translateY(-2px); }
+.shimmer-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+  animation: shimmer 2.2s infinite;
+  pointer-events: none;
 }
 
-/* Recharts tooltip */
-.recharts-tooltip-wrapper {
-  outline: none !important;
+/* ── Hero background orbs ──────────────────────────── */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: floatY 6s ease-in-out infinite;
+}
+.hero-orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(212,175,55,0.12) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  animation-delay: 0s;
+}
+.hero-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(0,188,212,0.1) 0%, transparent 70%);
+  bottom: 0px; left: -80px;
+  animation-delay: 2s;
 }
 
-/* Print styles for factures */
+/* ── Floating badge ────────────────────────────────── */
+.floating-badge {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  animation: floatY 4s ease-in-out infinite;
+  backdrop-filter: blur(10px);
+}
+
+/* ── Recharts ──────────────────────────────────────── */
+.recharts-tooltip-wrapper { outline: none !important; }
+
+/* ── Print ─────────────────────────────────────────── */
 @media print {
   .no-print { display: none !important; }
   body { background: white !important; color: black !important; }
-  .print-facture {
-    background: white !important;
-    color: black !important;
-    padding: 40px !important;
-  }
+  .print-facture { background: white !important; color: black !important; padding: 40px !important; }
 }
