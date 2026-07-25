@@ -23,23 +23,27 @@ Deploy    : Vercel
 
 ---
 
-## Design System
+## Design System — FORGE Afrika Navy × Gold × Cyan
 
 | Token CSS | Hex | Usage |
 |---|---|---|
-| `--green` | `#22c55e` | Revenus, croissance, CTAs primaires |
+| `--navy` | `#0A1628` | Navy primaire (alias de --bg) |
+| `--gold` | `#D4AF37` | Gold premium — CTAs, highlights |
+| `--gold2` | `#f7c060` | Gold clair |
+| `--cyan` | `#00BCD4` | Accent secondaire |
+| `--bg` | `#0A1628` | Fond principal |
+| `--bg2` | `#0e1f3d` | Cards, sidebar |
+| `--bg3` | `#111d34` | Inputs, nested cards |
+| `--text` | `#EBF4FF` | Texte principal |
+| `--text2` | `#8BABC9` | Texte secondaire |
+| `--text3` | `#4E6F8E` | Placeholders |
+| `--green` | `#22c55e` | Revenus, croissance |
 | `--green2` | `#16a34a` | Green hover/foncé |
-| `--blue` | `#3b82f6` | Actions secondaires, liens |
-| `--red` | `#ef4444` | Dépenses, erreurs, alertes |
+| `--red` | `#ef4444` | Dépenses, erreurs |
 | `--amber` | `#f59e0b` | En attente, neutre |
-| `--bg` | `#0d1117` | Fond principal |
-| `--bg2` | `#161b22` | Cards, sidebar |
-| `--bg3` | `#1c2333` | Inputs, nested cards |
-| `--border` | `#21262d` | Bordures légères |
-| `--border2` | `#30363d` | Bordures normales |
-| `--text` | `#e6edf3` | Texte principal |
-| `--text2` | `#8b949e` | Texte secondaire |
-| `--text3` | `#4e5f82` | Placeholders |
+| `--blue` | `#3b82f6` | Actions secondaires |
+| `--border` | `#1a3357` | Bordures légères |
+| `--border2` | `#2a4a72` | Bordures normales |
 
 Tailwind prefix : `ct-` (ex: `bg-ct-bg`, `text-ct-text2`)
 
