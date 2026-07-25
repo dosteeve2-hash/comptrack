@@ -9,6 +9,8 @@
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 
+**[📄 PRD](./PRD.md)**
+
 ---
 
 ## 🎯 Problème résolu
