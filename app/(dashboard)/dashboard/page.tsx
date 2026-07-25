@@ -26,12 +26,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
+import { categories } from "@/lib/data";
 import {
-  donneesMensuelles,
-  transactions,
-  topCategoriesDepenses,
-  kpisMoisActuel,
-} from "@/lib/data";
+  computeDonneesMensuelles,
+  computeKpisMoisActuel,
+  computeTopCategoriesDepenses,
+  useTransactions,
+} from "@/lib/store";
 import { formatMontant, formatDate, calcVariation } from "@/lib/utils";
 
 // ─── Types onboarding ─────────────────────────────────────────────────────────
@@ -99,6 +100,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export default function DashboardPage() {
+  const [txList] = useTransactions();
   const [mounted, setMounted] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -240,6 +242,13 @@ export default function DashboardPage() {
     },
   ];
 
+  const moisActuelLabel = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date());
+  const moisActuelCourt = new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(new Date());
+
+  const kpisMoisActuel = computeKpisMoisActuel(txList);
+  const donneesMensuelles = computeDonneesMensuelles(txList);
+  const topCategoriesDepenses = computeTopCategoriesDepenses(txList, categories);
+
   const revVariation = calcVariation(
     kpisMoisActuel.revenusMois,
     kpisMoisActuel.revenusMoisPrecedent
@@ -262,6 +271,8 @@ export default function DashboardPage() {
     up?: boolean;
   }
 
+  const hasHistorique = kpisMoisActuel.revenusMoisPrecedent > 0 || kpisMoisActuel.depensesMoisPrecedent > 0;
+
   const kpis: KPIItem[] = [
     {
       label: "Solde total",
@@ -271,19 +282,19 @@ export default function DashboardPage() {
       change: null,
     },
     {
-      label: "Revenus juin",
+      label: `Revenus ${moisActuelCourt}`,
       value: kpisMoisActuel.revenusMois,
       icon: TrendingUp,
       color: "var(--green)",
-      change: revVariation,
+      change: hasHistorique ? revVariation : null,
       up: true,
     },
     {
-      label: "Dépenses juin",
+      label: `Dépenses ${moisActuelCourt}`,
       value: kpisMoisActuel.depensesMois,
       icon: TrendingDown,
       color: "var(--red)",
-      change: depVariation,
+      change: hasHistorique ? depVariation : null,
       up: false,
     },
     {
@@ -291,12 +302,12 @@ export default function DashboardPage() {
       value: kpisMoisActuel.beneficeNet,
       icon: TrendingUp,
       color: "var(--amber)",
-      change: benVariation,
+      change: hasHistorique ? benVariation : null,
       up: true,
     },
   ];
 
-  const recentTransactions = transactions.slice(0, 5);
+  const recentTransactions = txList.slice(0, 5);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -407,7 +418,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">Tableau de bord</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
-            {entrepriseNom} — Juin 2026
+            {entrepriseNom} — {moisActuelLabel}
           </p>
         </div>
         <Link
@@ -483,7 +494,19 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
-          {mounted ? (
+          {!mounted ? (
+            <div
+              className="h-56 rounded-xl animate-pulse"
+              style={{ background: "var(--bg3)" }}
+            />
+          ) : donneesMensuelles.length === 0 ? (
+            <div
+              className="h-56 rounded-xl flex items-center justify-center text-sm"
+              style={{ background: "var(--bg3)", color: "var(--text2)" }}
+            >
+              Pas encore de données à afficher
+            </div>
+          ) : (
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={donneesMensuelles} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <defs>
@@ -528,11 +551,6 @@ export default function DashboardPage() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          ) : (
-            <div
-              className="h-56 rounded-xl animate-pulse"
-              style={{ background: "var(--bg3)" }}
-            />
           )}
         </div>
 
@@ -544,10 +562,19 @@ export default function DashboardPage() {
           <div className="mb-4">
             <h3 className="font-semibold">Dépenses par catégorie</h3>
             <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
-              Juin 2026
+              {moisActuelLabel}
             </p>
           </div>
-          {mounted ? (
+          {!mounted ? (
+            <div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
+          ) : topCategoriesDepenses.length === 0 ? (
+            <div
+              className="h-48 rounded-xl flex items-center justify-center text-sm text-center px-4"
+              style={{ background: "var(--bg3)", color: "var(--text2)" }}
+            >
+              Pas encore de dépenses ce mois-ci
+            </div>
+          ) : (
             <>
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
@@ -583,8 +610,6 @@ export default function DashboardPage() {
                 ))}
               </div>
             </>
-          ) : (
-            <div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
           )}
         </div>
       </div>
@@ -604,6 +629,12 @@ export default function DashboardPage() {
             Voir tout →
           </Link>
         </div>
+        {recentTransactions.length === 0 ? (
+          <div className="text-center py-12" style={{ color: "var(--text2)" }}>
+            <p className="text-sm font-medium mb-1">Aucune transaction pour le moment</p>
+            <p className="text-xs">Ajoutez votre première transaction pour commencer.</p>
+          </div>
+        ) : (
         <div className="divide-y" style={{ borderColor: "var(--border)" }}>
           {recentTransactions.map((tx) => (
             <div key={tx.id} className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.02] transition-colors">
@@ -635,6 +666,7 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

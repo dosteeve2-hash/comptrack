@@ -14,8 +14,9 @@ import {
   Download,
 } from "lucide-react";
 import { exportTransactions } from "@/lib/export";
-import { transactions as initialTransactions, categories } from "@/lib/data";
+import { categories } from "@/lib/data";
 import type { Transaction } from "@/lib/data";
+import { useTransactions } from "@/lib/store";
 import { formatMontant, formatDate } from "@/lib/utils";
 
 interface NewTransactionForm {
@@ -61,7 +62,7 @@ const compteParCategorie: Record<string, { debit: string; credit: string }> = {
 };
 
 export default function TransactionsPage() {
-  const [txList, setTxList] = useState<Transaction[]>(initialTransactions);
+  const [txList, setTxList] = useTransactions();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "revenu" | "depense">("all");
   const [filterCat, setFilterCat] = useState("all");

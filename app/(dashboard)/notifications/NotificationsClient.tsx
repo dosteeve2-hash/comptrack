@@ -91,13 +91,11 @@ export default function NotificationsClient({ notifications: initial, nonLues: i
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, lue: true } : n))
       );
-      if (!id.startsWith("mock-")) {
-        const supabase = createClient();
-        await supabase
-          .from("notifications")
-          .update({ lue: true })
-          .eq("id", id);
-      }
+      const supabase = createClient();
+      await supabase
+        .from("notifications")
+        .update({ lue: true })
+        .eq("id", id);
     });
   };
 
@@ -105,15 +103,13 @@ export default function NotificationsClient({ notifications: initial, nonLues: i
   const toutMarquerLu = () => {
     startTransition(async () => {
       setNotifications((prev) => prev.map((n) => ({ ...n, lue: true })));
-      const realIds = notifications
-        .filter((n) => !n.lue && !n.id.startsWith("mock-"))
-        .map((n) => n.id);
-      if (realIds.length > 0) {
+      const idsNonLues = notifications.filter((n) => !n.lue).map((n) => n.id);
+      if (idsNonLues.length > 0) {
         const supabase = createClient();
         await supabase
           .from("notifications")
           .update({ lue: true })
-          .in("id", realIds);
+          .in("id", idsNonLues);
       }
     });
   };

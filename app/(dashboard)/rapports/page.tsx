@@ -16,7 +16,14 @@ import {
 } from "recharts";
 import type { LucideIcon } from "lucide-react";
 import { Download, BookOpen, Scale, TrendingUp } from "lucide-react";
-import { donneesMensuelles, topCategoriesDepenses, factures, kpisMoisActuel } from "@/lib/data";
+import { categories } from "@/lib/data";
+import {
+  computeDonneesMensuelles,
+  computeKpisMoisActuel,
+  computeTopCategoriesDepenses,
+  useFactures,
+  useTransactions,
+} from "@/lib/store";
 import { formatMontant } from "@/lib/utils";
 
 interface CustomTooltipProps {
@@ -49,45 +56,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 type Periode = "mensuel" | "trimestriel" | "annuel";
 type VueRapport = "apercu" | "bilan" | "resultat";
 
-// ─── Données Bilan ────────────────────────────────────────────────────────────
-const creancesClients = factures
-  .filter((f) => f.statut === "en_attente")
-  .reduce((s, f) => s + f.montant, 0);
-
-const tresorerie = kpisMoisActuel.solde;
-const immobilisations = 850000; // valeur mock (matériel, mobilier)
-const totalActif = tresorerie + creancesClients + immobilisations;
-
-const detteFournisseurs = 180000; // mock
-const chargesConstater = 45000; // loyer + abonnements à payer
-const capitauxPropres = totalActif - detteFournisseurs - chargesConstater;
-const totalPassif = detteFournisseurs + chargesConstater + capitauxPropres;
-
-// ─── Données Compte de résultat ───────────────────────────────────────────────
-const totalRevenus6M = donneesMensuelles.reduce((s, m) => s + m.revenus, 0);
-const totalDepenses6M = donneesMensuelles.reduce((s, m) => s + m.depenses, 0);
-const resultatExploit = totalRevenus6M - totalDepenses6M;
-const chargesFinancieres = 15000;
-const resultatNet = resultatExploit - chargesFinancieres;
-const tauxMarge = Math.round((resultatNet / totalRevenus6M) * 100);
-
 interface LigneBilan {
   libelle: string;
   montant: number;
   info?: string;
 }
-
-const lignesActif: LigneBilan[] = [
-  { libelle: "Trésorerie (solde bancaire)", montant: tresorerie, info: "Argent disponible immédiatement sur vos comptes." },
-  { libelle: "Créances clients", montant: creancesClients, info: "Factures émises mais pas encore payées par vos clients." },
-  { libelle: "Immobilisations", montant: immobilisations, info: "Valeur de votre matériel, mobilier, équipements." },
-];
-
-const lignesPassif: LigneBilan[] = [
-  { libelle: "Dettes fournisseurs", montant: detteFournisseurs, info: "Ce que vous devez encore à vos fournisseurs." },
-  { libelle: "Charges à payer", montant: chargesConstater, info: "Loyers, abonnements et autres charges dues." },
-  { libelle: "Capitaux propres", montant: capitauxPropres, info: "La valeur nette de votre entreprise (Actif − Dettes)." },
-];
 
 interface LigneResultat {
   libelle: string;
@@ -96,19 +69,9 @@ interface LigneResultat {
   info?: string;
 }
 
-const lignesResultat: LigneResultat[] = [
-  { libelle: "Ventes et prestations", montant: totalRevenus6M, type: "produit", info: "Total de tous vos revenus sur la période." },
-  { libelle: "Total Produits d'exploitation", montant: totalRevenus6M, type: "sous-total" },
-  { libelle: "Achats et charges externes", montant: totalDepenses6M * 0.6, type: "charge", info: "Achat stock, sous-traitance, loyer, télécoms…" },
-  { libelle: "Charges de personnel", montant: totalDepenses6M * 0.36, type: "charge", info: "Salaires et charges sociales." },
-  { libelle: "Autres charges", montant: totalDepenses6M * 0.04, type: "charge", info: "Frais divers difficiles à catégoriser." },
-  { libelle: "Total Charges d'exploitation", montant: totalDepenses6M, type: "sous-total" },
-  { libelle: "Résultat d'exploitation (EBIT)", montant: resultatExploit, type: "resultat", info: "Produits − Charges. C'est votre bénéfice opérationnel." },
-  { libelle: "Charges financières", montant: chargesFinancieres, type: "charge", info: "Intérêts d'emprunt, frais bancaires." },
-  { libelle: "Résultat net", montant: resultatNet, type: "resultat", info: "Le bénéfice final après toutes les charges. C'est ce que vous avez vraiment gagné." },
-];
-
 export default function RapportsPage() {
+  const [txList] = useTransactions();
+  const [facturesList] = useFactures();
   const [periode, setPeriode] = useState<Periode>("mensuel");
   const [vueRapport, setVueRapport] = useState<VueRapport>("apercu");
   const [mounted, setMounted] = useState(false);
@@ -117,20 +80,86 @@ export default function RapportsPage() {
   const [tooltipResultat, setTooltipResultat] = useState<string | null>(null);
   useEffect(() => setMounted(true), []);
 
+  const donneesMensuelles = computeDonneesMensuelles(txList);
+  const topCategoriesDepenses = computeTopCategoriesDepenses(txList, categories);
+  const kpisMoisActuel = computeKpisMoisActuel(txList);
+
+  // ─── Données Bilan ──────────────────────────────────────────────────────────
+  const creancesClients = facturesList
+    .filter((f) => f.statut === "en_attente" || f.statut === "envoyee")
+    .reduce((s, f) => s + f.montant, 0);
+  const tresorerie = kpisMoisActuel.solde;
+  const immobilisations = 0; // pas de suivi des immobilisations pour le moment
+  const totalActif = tresorerie + creancesClients + immobilisations;
+
+  const detteFournisseurs = txList
+    .filter((t) => t.type === "depense" && t.statut === "en_attente")
+    .reduce((s, t) => s + t.montant, 0);
+  const chargesConstater = 0; // pas de suivi des charges à payer pour le moment
+  const capitauxPropres = totalActif - detteFournisseurs - chargesConstater;
+  const totalPassif = detteFournisseurs + chargesConstater + capitauxPropres;
+
+  const lignesActif: LigneBilan[] = [
+    { libelle: "Trésorerie (solde bancaire)", montant: tresorerie, info: "Argent disponible immédiatement sur vos comptes." },
+    { libelle: "Créances clients", montant: creancesClients, info: "Factures émises mais pas encore payées par vos clients." },
+    { libelle: "Immobilisations", montant: immobilisations, info: "Valeur de votre matériel, mobilier, équipements." },
+  ];
+
+  const lignesPassif: LigneBilan[] = [
+    { libelle: "Dettes fournisseurs", montant: detteFournisseurs, info: "Ce que vous devez encore à vos fournisseurs." },
+    { libelle: "Charges à payer", montant: chargesConstater, info: "Loyers, abonnements et autres charges dues." },
+    { libelle: "Capitaux propres", montant: capitauxPropres, info: "La valeur nette de votre entreprise (Actif − Dettes)." },
+  ];
+
+  // ─── Données Compte de résultat ─────────────────────────────────────────────
+  const totalRevenus6M = donneesMensuelles.reduce((s, m) => s + m.revenus, 0);
+  const totalDepenses6M = donneesMensuelles.reduce((s, m) => s + m.depenses, 0);
+  const resultatExploit = totalRevenus6M - totalDepenses6M;
+  const chargesFinancieres = 0; // pas de suivi des frais financiers pour le moment
+  const resultatNet = resultatExploit - chargesFinancieres;
+  const tauxMarge = totalRevenus6M > 0 ? Math.round((resultatNet / totalRevenus6M) * 100) : 0;
+
+  const sixMoisAgo = new Date();
+  sixMoisAgo.setDate(1);
+  sixMoisAgo.setMonth(sixMoisAgo.getMonth() - 5);
+  const chargesPersonnel = txList
+    .filter(
+      (t) =>
+        t.type === "depense" &&
+        t.statut === "validee" &&
+        t.categorie === "Salaires" &&
+        new Date(t.date) >= sixMoisAgo
+    )
+    .reduce((s, t) => s + t.montant, 0);
+  const autresCharges = totalDepenses6M - chargesPersonnel;
+
+  const lignesResultat: LigneResultat[] = [
+    { libelle: "Ventes et prestations", montant: totalRevenus6M, type: "produit", info: "Total de tous vos revenus sur la période." },
+    { libelle: "Total Produits d'exploitation", montant: totalRevenus6M, type: "sous-total" },
+    { libelle: "Charges de personnel", montant: chargesPersonnel, type: "charge", info: "Salaires et charges sociales." },
+    { libelle: "Achats et autres charges externes", montant: autresCharges, type: "charge", info: "Achat stock, sous-traitance, loyer, télécoms…" },
+    { libelle: "Total Charges d'exploitation", montant: totalDepenses6M, type: "sous-total" },
+    { libelle: "Résultat d'exploitation (EBIT)", montant: resultatExploit, type: "resultat", info: "Produits − Charges. C'est votre bénéfice opérationnel." },
+    { libelle: "Charges financières", montant: chargesFinancieres, type: "charge", info: "Intérêts d'emprunt, frais bancaires." },
+    { libelle: "Résultat net", montant: resultatNet, type: "resultat", info: "Le bénéfice final après toutes les charges. C'est ce que vous avez vraiment gagné." },
+  ];
+
   const totalRevenus = totalRevenus6M;
   const totalDepenses = totalDepenses6M;
   const beneficeNet = totalRevenus - totalDepenses;
-  const margeNette = Math.round((beneficeNet / totalRevenus) * 100);
+  const margeNette = totalRevenus > 0 ? Math.round((beneficeNet / totalRevenus) * 100) : 0;
+
+  const anneeActuelle = new Date().getFullYear();
 
   const donneesTrimestre = [
     {
-      mois: "T1 (Jan–Mar)",
+      mois: donneesMensuelles.length >= 3 ? `${donneesMensuelles[0].mois}–${donneesMensuelles[2].mois}` : "T1",
       revenus: donneesMensuelles.slice(0, 3).reduce((s, m) => s + m.revenus, 0),
       depenses: donneesMensuelles.slice(0, 3).reduce((s, m) => s + m.depenses, 0),
       benefice: donneesMensuelles.slice(0, 3).reduce((s, m) => s + m.benefice, 0),
     },
     {
-      mois: "T2 (Avr–Jun)",
+      mois: donneesMensuelles.length >= 6 ? `${donneesMensuelles[3].mois}–${donneesMensuelles[5].mois}` : "T2",
       revenus: donneesMensuelles.slice(3, 6).reduce((s, m) => s + m.revenus, 0),
       depenses: donneesMensuelles.slice(3, 6).reduce((s, m) => s + m.depenses, 0),
       benefice: donneesMensuelles.slice(3, 6).reduce((s, m) => s + m.benefice, 0),
@@ -144,7 +173,7 @@ export default function RapportsPage() {
       ? donneesTrimestre
       : [
           {
-            mois: "Année 2026",
+            mois: `Année ${anneeActuelle}`,
             revenus: totalRevenus,
             depenses: totalDepenses,
             benefice: beneficeNet,
@@ -379,7 +408,10 @@ export default function RapportsPage() {
           {/* Tableau */}
           <div className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
             <div className="px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-              <h3 className="font-bold">Compte de résultat — Jan à Juin 2026</h3>
+              <h3 className="font-bold">
+                Compte de résultat
+                {donneesMensuelles.length > 0 && ` — ${donneesMensuelles[0].mois} à ${donneesMensuelles[donneesMensuelles.length - 1].mois} ${anneeActuelle}`}
+              </h3>
               <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Cliquez sur une ligne pour l&apos;explication</p>
             </div>
             <div className="divide-y" style={{ borderColor: "var(--border)" }}>
@@ -531,7 +563,16 @@ export default function RapportsPage() {
               </span>
             </div>
           </div>
-          {mounted ? (
+          {!mounted ? (
+            <div className="h-64 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
+          ) : donneesAffichees.length === 0 || donneesAffichees.every((d) => d.revenus === 0 && d.depenses === 0) ? (
+            <div
+              className="h-64 rounded-xl flex items-center justify-center text-sm"
+              style={{ background: "var(--bg3)", color: "var(--text2)" }}
+            >
+              Pas encore de données à afficher
+            </div>
+          ) : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={donneesAffichees} barGap={4} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -553,8 +594,6 @@ export default function RapportsPage() {
                 <Bar dataKey="benefice" name="Bénéfice" fill="#3b82f6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="h-64 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
           )}
         </div>
 
@@ -569,33 +608,38 @@ export default function RapportsPage() {
               Par catégorie
             </p>
           </div>
-          {mounted ? (
-            <>
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie
-                    data={topCategoriesDepenses}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={75}
-                    innerRadius={45}
-                    dataKey="montant"
-                    strokeWidth={0}
-                  >
-                    {topCategoriesDepenses.map((entry, i) => (
-                      <Cell key={i} fill={entry.couleur} />
-                    ))}
-                  </Pie>
-                  <Legend
-                    formatter={(value: string) => (
-                      <span style={{ color: "var(--text2)", fontSize: 11 }}>{value}</span>
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </>
-          ) : (
+          {!mounted ? (
             <div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
+          ) : topCategoriesDepenses.length === 0 ? (
+            <div
+              className="h-48 rounded-xl flex items-center justify-center text-sm text-center px-4"
+              style={{ background: "var(--bg3)", color: "var(--text2)" }}
+            >
+              Pas encore de dépenses ce mois-ci
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie
+                  data={topCategoriesDepenses}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={75}
+                  innerRadius={45}
+                  dataKey="montant"
+                  strokeWidth={0}
+                >
+                  {topCategoriesDepenses.map((entry, i) => (
+                    <Cell key={i} fill={entry.couleur} />
+                  ))}
+                </Pie>
+                <Legend
+                  formatter={(value: string) => (
+                    <span style={{ color: "var(--text2)", fontSize: 11 }}>{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           )}
         </div>
       </div>
@@ -623,8 +667,15 @@ export default function RapportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
-              {tableData.map((row, i) => {
-                const marge = Math.round((row.benefice / row.revenus) * 100);
+              {tableData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-12" style={{ color: "var(--text2)" }}>
+                    Aucune donnée pour le moment
+                  </td>
+                </tr>
+              ) : (
+              tableData.map((row, i) => {
+                const marge = row.revenus > 0 ? Math.round((row.benefice / row.revenus) * 100) : 0;
                 return (
                   <tr key={i} className="hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-4 font-medium">{row.mois}</td>
@@ -642,7 +693,8 @@ export default function RapportsPage() {
                     </td>
                   </tr>
                 );
-              })}
+              })
+              )}
             </tbody>
             <tfoot>
               <tr

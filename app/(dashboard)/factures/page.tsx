@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Download, X, Printer, Eye, ChevronDown, Send, CheckCircle2, ArrowRight } from "lucide-react";
-import { factures as initialFactures, clients } from "@/lib/data";
 import type { Facture, FactureArticle, Transaction } from "@/lib/data";
+import { useClients, useFactures, useTransactions } from "@/lib/store";
 import { formatMontant, formatDate } from "@/lib/utils";
 
 const statutConfig: Record<
@@ -38,7 +38,9 @@ const defaultArticle = (): FactureArticle => ({
 });
 
 export default function FacturesPage() {
-  const [factureList, setFactureList] = useState<Facture[]>(initialFactures);
+  const [factureList, setFactureList] = useFactures();
+  const [clients] = useClients();
+  const [, setTransactions] = useTransactions();
   const [txCreees, setTxCreees] = useState<Transaction[]>([]); // transactions auto-créées via "Marquer payée"
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -50,6 +52,12 @@ export default function FacturesPage() {
   });
   const [formError, setFormError] = useState("");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [entrepriseNom, setEntrepriseNom] = useState("");
+
+  useEffect(() => {
+    const nom = localStorage.getItem("ct_entreprise_nom");
+    if (nom) setEntrepriseNom(nom);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -76,6 +84,7 @@ export default function FacturesPage() {
             statut: "validee",
           };
           setTxCreees((prev) => [newTx, ...prev]);
+          setTransactions((prev) => [newTx, ...prev]);
           showToast(`✓ Facture marquée payée · Transaction revenu créée automatiquement`);
           // Mettre à jour selectedFacture si c'est celle-là
           setSelectedFacture((sel) => sel?.id === id ? updated : sel);
@@ -129,7 +138,7 @@ export default function FacturesPage() {
     const montantTotal = form.articles.reduce((s, a) => s + a.total, 0);
     const newFacture: Facture = {
       id: `f${Date.now()}`,
-      numero: `FAC-2026-${String(factureList.length + 1).padStart(3, "0")}`,
+      numero: `FAC-${new Date().getFullYear()}-${String(factureList.length + 1).padStart(3, "0")}`,
       client: form.client,
       montant: montantTotal,
       dateCreation: new Date().toISOString().split("T")[0],
@@ -257,6 +266,12 @@ export default function FacturesPage() {
         className="rounded-2xl border overflow-hidden"
         style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
       >
+        {filtered.length === 0 ? (
+          <div className="text-center py-16" style={{ color: "var(--text2)" }}>
+            <p className="text-lg font-medium mb-1">Aucune facture</p>
+            <p className="text-sm">Créez votre première facture pour commencer.</p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -349,6 +364,7 @@ export default function FacturesPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Facture detail modal */}
@@ -400,9 +416,7 @@ export default function FacturesPage() {
                     </div>
                     <span className="font-bold">CompTrack</span>
                   </div>
-                  <p className="text-sm" style={{ color: "var(--text2)" }}>Mon Commerce</p>
-                  <p className="text-sm" style={{ color: "var(--text2)" }}>Ouagadougou, Burkina Faso</p>
-                  <p className="text-sm" style={{ color: "var(--text2)" }}>contact@moncommerce.bf</p>
+                  <p className="text-sm" style={{ color: "var(--text2)" }}>{entrepriseNom || "Votre entreprise"}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-mono font-bold text-lg">{selectedFacture.numero}</p>

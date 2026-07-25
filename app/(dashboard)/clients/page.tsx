@@ -12,8 +12,8 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
-import { clients as initialClients } from "@/lib/data";
 import type { Client } from "@/lib/data";
+import { useClients } from "@/lib/store";
 import { formatMontant, formatDate } from "@/lib/utils";
 
 interface NewClientForm {
@@ -35,7 +35,7 @@ const defaultForm: NewClientForm = {
 };
 
 export default function ClientsPage() {
-  const [clientList, setClientList] = useState<Client[]>(initialClients);
+  const [clientList, setClientList] = useClients();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "client" | "fournisseur">("all");
   const [modalOpen, setModalOpen] = useState(false);
