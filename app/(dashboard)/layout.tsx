@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
+import { useFactures } from "@/lib/store";
 
 interface NavItem {
   href: string;
@@ -19,10 +20,10 @@ interface NavItem {
   badge?: number | null;
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { href: "/dashboard",      label: "Tableau de bord",  icon: LayoutDashboard },
   { href: "/transactions",   label: "Transactions",     icon: ArrowLeftRight  },
-  { href: "/factures",       label: "Factures",         icon: FileText,       badge: 1 },
+  { href: "/factures",       label: "Factures",         icon: FileText        },
   { href: "/depenses",       label: "Dépenses",         icon: TrendingDown    },
   { href: "/revenus",        label: "Revenus",          icon: TrendingUp      },
   { href: "/clients",        label: "Clients",          icon: Users           },
@@ -30,7 +31,7 @@ const navItems: NavItem[] = [
   { href: "/budgets",        label: "Budgets",          icon: ShoppingCart    },
   { href: "/objectifs",      label: "Objectifs",        icon: Target          },
   { href: "/rapports",       label: "Rapports",         icon: BarChart3       },
-  { href: "/notifications",  label: "Notifications",    icon: Bell,           badge: 3 },
+  { href: "/notifications",  label: "Notifications",    icon: Bell            },
   { href: "/parametres",     label: "Paramètres",       icon: Settings        },
   { href: "/apprendre",      label: "Apprendre",        icon: GraduationCap   },
 ];
@@ -48,6 +49,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_PREFS);
+  const [facturesList] = useFactures();
+  const [notifsNonLues, setNotifsNonLues] = useState(0);
 
   // Charge et applique les préférences locales (couleur, entreprise…)
   useEffect(() => {
@@ -61,6 +64,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.addEventListener("comptrack:prefs-changed", onChange);
     return () => window.removeEventListener("comptrack:prefs-changed", onChange);
   }, []);
+
+  // Compte réel des notifications non lues (0 si pas connecté / erreur)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { count } = await supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("lue", false);
+        if (!cancelled) setNotifsNonLues(count ?? 0);
+      } catch {
+        if (!cancelled) setNotifsNonLues(0);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const facturesEnAttente = facturesList.filter(
+    (f) => f.statut === "en_attente" || f.statut === "retard"
+  ).length;
+
+  const navItems: NavItem[] = baseNavItems.map((item) => {
+    if (item.href === "/factures") return { ...item, badge: facturesEnAttente || null };
+    if (item.href === "/notifications") return { ...item, badge: notifsNonLues || null };
+    return item;
+  });
 
   const handleSignOut = async () => {
     const supabase = createClient();
