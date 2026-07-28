@@ -11,9 +11,13 @@ import {
   Package,
   X,
   ChevronDown,
+  Clock,
+  ShoppingBag,
+  Sparkles,
+  Receipt,
 } from "lucide-react";
 import type { Client } from "@/lib/data";
-import { useClients } from "@/lib/store";
+import { useClients, useFactures, computeClientStats } from "@/lib/store";
 import { formatMontant, formatDate } from "@/lib/utils";
 
 interface NewClientForm {
@@ -36,11 +40,18 @@ const defaultForm: NewClientForm = {
 
 export default function ClientsPage() {
   const [clientList, setClientList] = useClients();
+  const [facturesList] = useFactures();
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"all" | "client" | "fournisseur">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<NewClientForm>(defaultForm);
   const [formError, setFormError] = useState("");
+  const [detailClient, setDetailClient] = useState<Client | null>(null);
+
+  const detailStats = useMemo(
+    () => (detailClient ? computeClientStats(detailClient.nom, facturesList) : null),
+    [detailClient, facturesList]
+  );
 
   const filtered = useMemo(() => {
     return clientList.filter((c) => {
@@ -190,7 +201,8 @@ export default function ClientsPage() {
           {filtered.map((client) => (
             <div
               key={client.id}
-              className="p-5 rounded-2xl border transition-all hover:-translate-y-0.5"
+              onClick={() => setDetailClient(client)}
+              className="p-5 rounded-2xl border transition-all hover:-translate-y-0.5 cursor-pointer"
               style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
             >
               <div className="flex items-start justify-between mb-4">
@@ -270,6 +282,123 @@ export default function ClientsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Detail client modal */}
+      {detailClient && detailStats && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.7)" }}
+          onClick={() => setDetailClient(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl overflow-hidden animate-slide-up"
+            style={{ background: "var(--bg2)", border: "1px solid var(--border2)", maxHeight: "90vh", overflowY: "auto" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
+                  style={{
+                    background: detailClient.type === "client" ? "rgba(34,197,94,0.15)" : "rgba(59,130,246,0.15)",
+                    color: detailClient.type === "client" ? "var(--green)" : "var(--blue)",
+                  }}
+                >
+                  {detailClient.nom.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold leading-tight">{detailClient.nom}</h2>
+                  <p className="text-xs" style={{ color: "var(--text2)" }}>{detailClient.ville}, {detailClient.pays}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailClient(null)}
+                className="p-1.5 rounded-lg transition-all hover:opacity-70"
+                style={{ color: "var(--text2)" }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl" style={{ background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                  <p className="text-xs mb-1" style={{ color: "var(--text2)" }}>Total dépensé</p>
+                  <p className="font-bold font-mono" style={{ color: "var(--green)" }}>{formatMontant(detailStats.totalDepense)}</p>
+                </div>
+                <div className="p-3 rounded-xl" style={{ background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                  <p className="text-xs mb-1" style={{ color: "var(--text2)" }}>Transactions</p>
+                  <p className="font-bold font-mono">{detailStats.nbTransactions}</p>
+                </div>
+                <div className="p-3 rounded-xl" style={{ background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                  <p className="text-xs mb-1 flex items-center gap-1" style={{ color: "var(--text2)" }}>
+                    <Clock className="w-3 h-3" /> Dernière visite
+                  </p>
+                  <p className="font-mono text-sm">{detailStats.derniereVisite ? formatDate(detailStats.derniereVisite) : "—"}</p>
+                </div>
+                <div className="p-3 rounded-xl" style={{ background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                  <p className="text-xs mb-1" style={{ color: "var(--text2)" }}>Fréquence d&apos;achat</p>
+                  <p className="font-mono text-sm">
+                    {detailStats.frequenceMoyenneJours != null ? `~${detailStats.frequenceMoyenneJours} j` : "—"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Produits favoris */}
+              <div>
+                <p className="text-xs font-semibold mb-2 flex items-center gap-1.5 uppercase tracking-wider" style={{ color: "var(--text2)" }}>
+                  <ShoppingBag className="w-3.5 h-3.5" /> Produits favoris
+                </p>
+                {detailStats.produitsFavoris.length === 0 ? (
+                  <p className="text-sm" style={{ color: "var(--text2)" }}>Aucun achat enregistré pour l&apos;instant.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {detailStats.produitsFavoris.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg" style={{ background: "var(--bg3)" }}>
+                        <span>{p.nom}</span>
+                        <span className="text-xs font-mono" style={{ color: "var(--text2)" }}>{p.count}×</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Suggestion intelligente */}
+              {detailStats.produitsFavoris.length > 0 && detailStats.produitsFavoris[0].count >= 2 && (
+                <div className="flex items-start gap-2 p-3 rounded-xl" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.25)" }}>
+                  <Sparkles className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--gold)" }} />
+                  <p className="text-xs" style={{ color: "var(--text)" }}>
+                    Ce client achète souvent <strong>{detailStats.produitsFavoris[0].nom}</strong> — proposer une offre ?
+                  </p>
+                </div>
+              )}
+
+              {/* Timeline */}
+              <div>
+                <p className="text-xs font-semibold mb-2 flex items-center gap-1.5 uppercase tracking-wider" style={{ color: "var(--text2)" }}>
+                  <Receipt className="w-3.5 h-3.5" /> Derniers achats
+                </p>
+                {detailStats.timeline.length === 0 ? (
+                  <p className="text-sm" style={{ color: "var(--text2)" }}>Aucun historique pour l&apos;instant.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {detailStats.timeline.map((t, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm px-3 py-2 rounded-lg" style={{ background: "var(--bg3)" }}>
+                        <div>
+                          <span className="font-mono text-xs font-semibold">{t.numero}</span>
+                          <span className="text-xs ml-2" style={{ color: "var(--text2)" }}>{formatDate(t.date)}</span>
+                        </div>
+                        <span className="font-mono font-semibold text-xs">{formatMontant(t.montant)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

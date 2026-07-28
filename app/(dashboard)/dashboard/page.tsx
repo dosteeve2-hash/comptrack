@@ -24,6 +24,9 @@ import {
   X,
   Building2,
   ChevronRight,
+  Zap,
+  Trophy,
+  ShoppingBag,
 } from "lucide-react";
 import Link from "next/link";
 import { categories } from "@/lib/data";
@@ -31,6 +34,9 @@ import {
   computeDonneesMensuelles,
   computeKpisMoisActuel,
   computeTopCategoriesDepenses,
+  computeTopClients,
+  computeTopProduits,
+  useFactures,
   useTransactions,
 } from "@/lib/store";
 import { formatMontant, formatDate, calcVariation } from "@/lib/utils";
@@ -101,6 +107,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 export default function DashboardPage() {
   const [txList] = useTransactions();
+  const [facturesList] = useFactures();
   const [mounted, setMounted] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
@@ -308,6 +315,8 @@ export default function DashboardPage() {
   ];
 
   const recentTransactions = txList.slice(0, 5);
+  const topClients = computeTopClients(facturesList, 3);
+  const topProduits = computeTopProduits(facturesList, 5);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -421,14 +430,24 @@ export default function DashboardPage() {
             {entrepriseNom} — {moisActuelLabel}
           </p>
         </div>
-        <Link
-          href="/transactions"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-          style={{ background: "var(--green)", color: "#000" }}
-        >
-          <Plus className="w-4 h-4" />
-          Nouvelle transaction
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/vente-rapide"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
+            style={{ background: "linear-gradient(135deg, var(--gold), var(--gold2))", color: "var(--navy)" }}
+          >
+            <Zap className="w-4 h-4" />
+            Nouvelle vente
+          </Link>
+          <Link
+            href="/transactions"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{ background: "var(--green)", color: "#000" }}
+          >
+            <Plus className="w-4 h-4" />
+            Nouvelle transaction
+          </Link>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -667,6 +686,79 @@ export default function DashboardPage() {
           ))}
         </div>
         )}
+      </div>
+
+      {/* Meilleurs clients / Produits les plus vendus */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl border" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+          <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+            <h3 className="font-semibold flex items-center gap-2">
+              <Trophy className="w-4 h-4" style={{ color: "var(--gold)" }} />
+              Meilleurs clients
+            </h3>
+            <Link href="/clients" className="text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--green)" }}>
+              Voir tout →
+            </Link>
+          </div>
+          {topClients.length === 0 ? (
+            <div className="text-center py-10" style={{ color: "var(--text2)" }}>
+              <p className="text-sm font-medium mb-1">Pas encore de ventes</p>
+              <p className="text-xs">Vos meilleurs clients apparaîtront ici.</p>
+            </div>
+          ) : (
+            <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+              {topClients.map((c, i) => (
+                <div key={c.nom} className="flex items-center gap-4 px-6 py-3.5">
+                  <span
+                    className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0"
+                    style={{ background: "rgba(212,175,55,0.12)", color: "var(--gold)" }}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{c.nom}</p>
+                    <p className="text-xs" style={{ color: "var(--text2)" }}>{c.nbFactures} facture{c.nbFactures !== 1 ? "s" : ""}</p>
+                  </div>
+                  <p className="text-sm font-bold font-mono flex-shrink-0" style={{ color: "var(--green)" }}>
+                    {formatMontant(c.montant)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
+          <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+            <h3 className="font-semibold flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4" style={{ color: "var(--cyan)" }} />
+              Produits les plus vendus
+            </h3>
+            <Link href="/catalogue" className="text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--green)" }}>
+              Voir tout →
+            </Link>
+          </div>
+          {topProduits.length === 0 ? (
+            <div className="text-center py-10" style={{ color: "var(--text2)" }}>
+              <p className="text-sm font-medium mb-1">Pas encore de ventes</p>
+              <p className="text-xs">Utilisez la vente rapide pour voir apparaître vos meilleurs produits.</p>
+            </div>
+          ) : (
+            <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+              {topProduits.map((p) => (
+                <div key={p.nom} className="flex items-center gap-4 px-6 py-3.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{p.nom}</p>
+                    <p className="text-xs" style={{ color: "var(--text2)" }}>{p.quantite} vendu{p.quantite !== 1 ? "s" : ""}</p>
+                  </div>
+                  <p className="text-sm font-bold font-mono flex-shrink-0" style={{ color: "var(--cyan)" }}>
+                    {formatMontant(p.montant)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3, Users, FileText,
   Settings, TrendingUp, TrendingDown, LogOut, Menu, X, Bell,
-  GraduationCap, Target, ShoppingCart, Truck,
+  GraduationCap, Target, ShoppingCart, Truck, Zap, Package,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
@@ -22,8 +22,10 @@ interface NavItem {
 
 const baseNavItems: NavItem[] = [
   { href: "/dashboard",      label: "Tableau de bord",  icon: LayoutDashboard },
+  { href: "/vente-rapide",   label: "Vente rapide",     icon: Zap             },
   { href: "/transactions",   label: "Transactions",     icon: ArrowLeftRight  },
   { href: "/factures",       label: "Factures",         icon: FileText        },
+  { href: "/catalogue",      label: "Catalogue",        icon: Package         },
   { href: "/depenses",       label: "Dépenses",         icon: TrendingDown    },
   { href: "/revenus",        label: "Revenus",          icon: TrendingUp      },
   { href: "/clients",        label: "Clients",          icon: Users           },
@@ -125,17 +127,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isVenteRapide = item.href === "/vente-rapide";
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
-              style={{
-                background: isActive ? "rgba(212,175,55,0.12)" : "transparent",
-                color: isActive ? "var(--gold)" : "var(--text2)",
-                border: isActive ? "1px solid rgba(212,175,55,0.2)" : "1px solid transparent",
-              }}
+              style={
+                isVenteRapide
+                  ? {
+                      background: isActive
+                        ? "linear-gradient(135deg, rgba(212,175,55,0.28), rgba(0,188,212,0.16))"
+                        : "linear-gradient(135deg, rgba(212,175,55,0.16), rgba(0,188,212,0.08))",
+                      color: "var(--gold)",
+                      border: "1px solid rgba(212,175,55,0.35)",
+                      fontWeight: 700,
+                    }
+                  : {
+                      background: isActive ? "rgba(212,175,55,0.12)" : "transparent",
+                      color: isActive ? "var(--gold)" : "var(--text2)",
+                      border: isActive ? "1px solid rgba(212,175,55,0.2)" : "1px solid transparent",
+                    }
+              }
             >
               <item.icon className="flex-shrink-0" style={{ width: 17, height: 17 }} />
               {item.label}

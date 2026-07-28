@@ -50,6 +50,17 @@ export interface Categorie {
   couleur: string;
 }
 
+export interface ProduitCatalogue {
+  id: string;
+  nom: string;
+  description?: string;
+  categorie: "produit" | "service" | "immobilier" | "autre";
+  prixUnitaire: number;
+  unite: string;
+  stock?: number;
+  dateCreation: string;
+}
+
 export interface DonneesMensuelles {
   mois: string;
   revenus: number;

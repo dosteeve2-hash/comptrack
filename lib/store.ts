@@ -5,7 +5,7 @@
 // en gardant la même forme de retour (voir CLAUDE.md).
 
 import { useCallback, useEffect, useState } from "react";
-import type { Categorie, Client, DonneesMensuelles, Facture, Transaction } from "./data";
+import type { Categorie, Client, DonneesMensuelles, Facture, ProduitCatalogue, Transaction } from "./data";
 
 const STORAGE_KEYS = {
   transactions: "comptrack_transactions",
@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   factures: "comptrack_factures",
   budgets: "comptrack_budgets",
   objectifs: "comptrack_objectifs",
+  catalogue: "comptrack_catalogue",
 } as const;
 
 type Updater<T> = T[] | ((prev: T[]) => T[]);
@@ -70,6 +71,10 @@ export function useClients() {
 
 export function useFactures() {
   return usePersistedList<Facture>(STORAGE_KEYS.factures);
+}
+
+export function useCatalogue() {
+  return usePersistedList<ProduitCatalogue>(STORAGE_KEYS.catalogue);
 }
 
 export { STORAGE_KEYS };
@@ -195,4 +200,99 @@ export function computeTopCategoriesDepenses(
   }
 
   return resultat;
+}
+
+export interface TopClient {
+  nom: string;
+  montant: number;
+  nbFactures: number;
+}
+
+/** Top clients par volume payé (factures statut "payee"). [] si aucune facture payée. */
+export function computeTopClients(factures: Facture[], topN = 3): TopClient[] {
+  const payees = factures.filter((f) => f.statut === "payee");
+  if (payees.length === 0) return [];
+
+  const parClient = new Map<string, { montant: number; nb: number }>();
+  for (const f of payees) {
+    const cur = parClient.get(f.client) ?? { montant: 0, nb: 0 };
+    cur.montant += f.montant;
+    cur.nb += 1;
+    parClient.set(f.client, cur);
+  }
+
+  return Array.from(parClient.entries())
+    .map(([nom, v]) => ({ nom, montant: v.montant, nbFactures: v.nb }))
+    .sort((a, b) => b.montant - a.montant)
+    .slice(0, topN);
+}
+
+export interface TopProduit {
+  nom: string;
+  quantite: number;
+  montant: number;
+}
+
+/** Produits les plus vendus, calculé à partir des lignes d'articles des factures payées. */
+export function computeTopProduits(factures: Facture[], topN = 5): TopProduit[] {
+  const payees = factures.filter((f) => f.statut === "payee");
+  if (payees.length === 0) return [];
+
+  const parProduit = new Map<string, { quantite: number; montant: number }>();
+  for (const f of payees) {
+    for (const a of f.articles) {
+      const cur = parProduit.get(a.description) ?? { quantite: 0, montant: 0 };
+      cur.quantite += a.quantite;
+      cur.montant += a.total;
+      parProduit.set(a.description, cur);
+    }
+  }
+
+  return Array.from(parProduit.entries())
+    .map(([nom, v]) => ({ nom, quantite: v.quantite, montant: v.montant }))
+    .sort((a, b) => b.montant - a.montant)
+    .slice(0, topN);
+}
+
+export interface ClientStats {
+  totalDepense: number;
+  nbTransactions: number;
+  derniereVisite: string | null;
+  frequenceMoyenneJours: number | null;
+  produitsFavoris: { nom: string; count: number }[];
+  timeline: { numero: string; date: string; montant: number }[];
+}
+
+/** Habitudes d'achat d'un client, calculées à partir de ses factures payées. */
+export function computeClientStats(clientNom: string, factures: Facture[]): ClientStats {
+  const clientFactures = factures
+    .filter((f) => f.client === clientNom && f.statut === "payee")
+    .sort((a, b) => new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime());
+
+  const totalDepense = clientFactures.reduce((s, f) => s + f.montant, 0);
+  const nbTransactions = clientFactures.length;
+  const derniereVisite = clientFactures[0]?.dateCreation ?? null;
+
+  let frequenceMoyenneJours: number | null = null;
+  if (clientFactures.length >= 2) {
+    const dates = clientFactures.map((f) => new Date(f.dateCreation).getTime()).sort((a, b) => a - b);
+    const diffs: number[] = [];
+    for (let i = 1; i < dates.length; i++) diffs.push((dates[i] - dates[i - 1]) / (1000 * 60 * 60 * 24));
+    frequenceMoyenneJours = Math.round(diffs.reduce((s, d) => s + d, 0) / diffs.length);
+  }
+
+  const parProduit = new Map<string, number>();
+  for (const f of clientFactures) {
+    for (const a of f.articles) {
+      parProduit.set(a.description, (parProduit.get(a.description) ?? 0) + a.quantite);
+    }
+  }
+  const produitsFavoris = Array.from(parProduit.entries())
+    .map(([nom, count]) => ({ nom, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+
+  const timeline = clientFactures.slice(0, 5).map((f) => ({ numero: f.numero, date: f.dateCreation, montant: f.montant }));
+
+  return { totalDepense, nbTransactions, derniereVisite, frequenceMoyenneJours, produitsFavoris, timeline };
 }
