@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle,
@@ -10,8 +10,7 @@ import {
   CheckCheck,
   Bell,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import type { Notification } from "./page";
+import type { Notification } from "@/lib/data";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -64,16 +63,13 @@ type Filtre = "toutes" | "non-lues" | "alertes";
 
 interface Props {
   notifications: Notification[];
-  userId: string;
-  nonLues: number;
+  setNotifications: (updater: Notification[] | ((prev: Notification[]) => Notification[])) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function NotificationsClient({ notifications: initial, nonLues: initialNonLues }: Props) {
-  const [notifications, setNotifications] = useState<Notification[]>(initial);
+export default function NotificationsClient({ notifications, setNotifications }: Props) {
   const [filtre, setFiltre] = useState<Filtre>("toutes");
-  const [isPending, startTransition] = useTransition();
 
   const nonLues = notifications.filter((n) => !n.lue).length;
 
@@ -86,32 +82,12 @@ export default function NotificationsClient({ notifications: initial, nonLues: i
 
   // Marquer une notif comme lue
   const marquerLue = (id: string) => {
-    startTransition(async () => {
-      // Optimistic update
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, lue: true } : n))
-      );
-      const supabase = createClient();
-      await supabase
-        .from("notifications")
-        .update({ lue: true })
-        .eq("id", id);
-    });
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, lue: true } : n)));
   };
 
   // Tout marquer comme lu
   const toutMarquerLu = () => {
-    startTransition(async () => {
-      setNotifications((prev) => prev.map((n) => ({ ...n, lue: true })));
-      const idsNonLues = notifications.filter((n) => !n.lue).map((n) => n.id);
-      if (idsNonLues.length > 0) {
-        const supabase = createClient();
-        await supabase
-          .from("notifications")
-          .update({ lue: true })
-          .in("id", idsNonLues);
-      }
-    });
+    setNotifications((prev) => prev.map((n) => ({ ...n, lue: true })));
   };
 
   const filtres: { key: Filtre; label: string; count?: number }[] = [
@@ -152,8 +128,7 @@ export default function NotificationsClient({ notifications: initial, nonLues: i
         {nonLues > 0 && (
           <button
             onClick={toutMarquerLu}
-            disabled={isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80 disabled:opacity-40"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
             style={{
               background: "rgba(212,175,55,0.1)",
               border: "1px solid rgba(212,175,55,0.3)",
@@ -271,7 +246,7 @@ export default function NotificationsClient({ notifications: initial, nonLues: i
                         className="text-xs flex-shrink-0 font-mono"
                         style={{ color: "var(--text3)" }}
                       >
-                        {tempsRelatif(notif.created_at)}
+                        {tempsRelatif(notif.createdAt)}
                       </span>
                     </div>
 
@@ -296,8 +271,7 @@ export default function NotificationsClient({ notifications: initial, nonLues: i
                       {!notif.lue && (
                         <button
                           onClick={() => marquerLue(notif.id)}
-                          disabled={isPending}
-                          className="inline-flex items-center gap-1 text-xs font-medium transition-all hover:opacity-70 disabled:opacity-40"
+                          className="inline-flex items-center gap-1 text-xs font-medium transition-all hover:opacity-70"
                           style={{ color: "#D4AF37" }}
                         >
                           <CheckCircle className="w-3 h-3" />

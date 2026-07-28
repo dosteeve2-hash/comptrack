@@ -6,12 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3, Users, FileText,
-  Settings, TrendingUp, TrendingDown, LogOut, Menu, X, Bell,
+  Settings, TrendingUp, TrendingDown, Menu, X, Bell,
   GraduationCap, Target, ShoppingCart, Truck, Zap, Package,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
-import { useFactures } from "@/lib/store";
+import { useFactures, useNotifications } from "@/lib/store";
 
 interface NavItem {
   href: string;
@@ -48,11 +47,11 @@ const bottomNavItems: NavItem[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prefs, setPrefs] = useState<UserPrefs>(DEFAULT_PREFS);
   const [facturesList] = useFactures();
-  const [notifsNonLues, setNotifsNonLues] = useState(0);
+  const [notifications] = useNotifications();
+  const notifsNonLues = notifications.filter((n) => !n.lue).length;
 
   // Charge et applique les préférences locales (couleur, entreprise…)
   useEffect(() => {
@@ -67,27 +66,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => window.removeEventListener("comptrack:prefs-changed", onChange);
   }, []);
 
-  // Compte réel des notifications non lues (0 si pas connecté / erreur)
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { count } = await supabase
-          .from("notifications")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("lue", false);
-        if (!cancelled) setNotifsNonLues(count ?? 0);
-      } catch {
-        if (!cancelled) setNotifsNonLues(0);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
   const facturesEnAttente = facturesList.filter(
     (f) => f.statut === "en_attente" || f.statut === "retard"
   ).length;
@@ -97,12 +75,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (item.href === "/notifications") return { ...item, badge: notifsNonLues || null };
     return item;
   });
-
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/connexion");
-  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -201,20 +173,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
           style={{ background: "var(--cyan)", color: "var(--navy)" }}
         >
-          U
+          {prefs.companyName.charAt(0).toUpperCase() || "C"}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{prefs.companyName}</p>
           <p className="text-xs truncate" style={{ color: "var(--text3)" }}>{prefs.country} · {prefs.currency}</p>
         </div>
-        <button
-          onClick={handleSignOut}
+        <Link
+          href="/parametres"
           className="p-1.5 rounded-lg transition-all hover:opacity-70"
           style={{ color: "var(--text2)" }}
-          title="Déconnexion"
+          title="Paramètres"
         >
-          <LogOut className="w-4 h-4" />
-        </button>
+          <Settings className="w-4 h-4" />
+        </Link>
       </div>
     </div>
   );

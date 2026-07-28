@@ -24,7 +24,7 @@ const plans = [
       { text: "Support email", included: false },
     ],
     cta: "Commencer gratuitement",
-    ctaHref: "/inscription",
+    ctaHref: "/dashboard",
   },
   {
     name: "PME",
@@ -45,7 +45,7 @@ const plans = [
       { text: "Support prioritaire 4h", included: false },
     ],
     cta: "Essayer 30 jours gratuit",
-    ctaHref: "/inscription",
+    ctaHref: "/dashboard",
   },
   {
     name: "Entreprise",
@@ -66,7 +66,7 @@ const plans = [
       { text: "Formation en ligne incluse", included: true },
     ],
     cta: "Contacter l'équipe",
-    ctaHref: "mailto:contact@forgeafrika.com",
+    ctaHref: "mailto:docompaore2@gmail.com",
   },
 ];
 
@@ -117,8 +117,7 @@ export default function TarifsPage() {
             <span className="font-bold text-lg">CompTrack</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/connexion" className="px-4 py-2 text-sm hover:opacity-80" style={{ color: "var(--text2)" }}>Connexion</Link>
-            <Link href="/inscription" className="px-4 py-2 text-sm rounded-xl font-semibold hover:brightness-110" style={{ background: "var(--gold)", color: "var(--navy)" }}>
+            <Link href="/dashboard" className="px-4 py-2 text-sm rounded-xl font-semibold hover:brightness-110" style={{ background: "var(--gold)", color: "var(--navy)" }}>
               Essayer gratuitement
             </Link>
           </div>
@@ -263,10 +262,10 @@ export default function TarifsPage() {
           <h3 className="text-xl font-bold mb-3">Une question ? Notre équipe est là.</h3>
           <p className="text-sm mb-6" style={{ color: "var(--text2)" }}>Réponse garantie en moins de 24h.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/inscription" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:brightness-110" style={{ background: "var(--gold)", color: "var(--navy)" }}>
+            <Link href="/dashboard" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all hover:brightness-110" style={{ background: "var(--gold)", color: "var(--navy)" }}>
               Démarrer gratuitement
             </Link>
-            <Link href="mailto:contact@forgeafrika.com" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all hover:opacity-80" style={{ border: "1px solid var(--border2)", color: "var(--text)" }}>
+            <Link href="mailto:docompaore2@gmail.com" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all hover:opacity-80" style={{ border: "1px solid var(--border2)", color: "var(--text)" }}>
               Nous contacter
             </Link>
           </div>

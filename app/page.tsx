@@ -45,18 +45,11 @@ export default function HomePage() {
           </nav>
           <div className="flex items-center gap-3">
             <Link
-              href="/connexion"
-              className="px-4 py-2 text-sm rounded-lg transition-colors hover:opacity-80"
-              style={{ color: "var(--text2)" }}
-            >
-              Connexion
-            </Link>
-            <Link
-              href="/inscription"
+              href="/dashboard"
               className="px-4 py-2 text-sm rounded-xl font-semibold transition-all hover:brightness-110"
               style={{ background: "var(--gold)", color: "var(--navy)" }}
             >
-              Essayer gratuitement
+              Accéder au tableau de bord
             </Link>
           </div>
         </div>
@@ -90,7 +83,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/inscription"
+              href="/dashboard"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all hover:brightness-110"
               style={{ background: "var(--gold)", color: "var(--navy)" }}
             >
@@ -318,7 +311,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link
-                  href={i === 2 ? "mailto:contact@forgeafrika.com" : "/inscription"}
+                  href={i === 2 ? "mailto:docompaore2@gmail.com" : "/dashboard"}
                   className="block w-full text-center py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
                   style={plan.highlighted
                     ? { background: "var(--gold)", color: "var(--navy)" }
@@ -351,7 +344,7 @@ export default function HomePage() {
             Démarrez gratuitement. Aucune carte bancaire requise.
           </p>
           <Link
-            href="/inscription"
+            href="/dashboard"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:brightness-110"
             style={{ background: "var(--gold)", color: "var(--navy)" }}
           >
@@ -394,8 +387,8 @@ export default function HomePage() {
           </div>
           <div>
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--gold)" }}>Contact</p>
-            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>contact@forgeafrika.com</p>
-            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>+226 XX XX XX XX</p>
+            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>docompaore2@gmail.com</p>
+            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>+90 501 295 841</p>
             <div className="flex items-center gap-2 mt-3">
               <DollarSign className="w-4 h-4" style={{ color: "var(--cyan)" }} />
               <span className="text-xs" style={{ color: "var(--text2)" }}>FCFA · EUR · USD · XOF</span>

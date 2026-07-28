@@ -68,6 +68,17 @@ export interface DonneesMensuelles {
   benefice: number;
 }
 
+export interface Notification {
+  id: string;
+  titre: string;
+  message: string;
+  type: "info" | "succes" | "alerte" | "erreur";
+  categorie: "facture" | "depense" | "objectif" | "client" | "fournisseur" | "general";
+  lue: boolean;
+  lien: string | null;
+  createdAt: string;
+}
+
 // ─── Catégories ───────────────────────────────────────────────────────────────
 // Taxonomie de l'application (pas une donnée utilisateur) — utilisée pour
 // classer les transactions et alimenter les listes déroulantes.

@@ -5,7 +5,7 @@
 // en gardant la même forme de retour (voir CLAUDE.md).
 
 import { useCallback, useEffect, useState } from "react";
-import type { Categorie, Client, DonneesMensuelles, Facture, ProduitCatalogue, Transaction } from "./data";
+import type { Categorie, Client, DonneesMensuelles, Facture, Notification, ProduitCatalogue, Transaction } from "./data";
 
 const STORAGE_KEYS = {
   transactions: "comptrack_transactions",
@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   budgets: "comptrack_budgets",
   objectifs: "comptrack_objectifs",
   catalogue: "comptrack_catalogue",
+  notifications: "comptrack_notifications",
 } as const;
 
 type Updater<T> = T[] | ((prev: T[]) => T[]);
@@ -75,6 +76,10 @@ export function useFactures() {
 
 export function useCatalogue() {
   return usePersistedList<ProduitCatalogue>(STORAGE_KEYS.catalogue);
+}
+
+export function useNotifications() {
+  return usePersistedList<Notification>(STORAGE_KEYS.notifications);
 }
 
 export { STORAGE_KEYS };
