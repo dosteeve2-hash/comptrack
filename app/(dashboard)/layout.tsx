@@ -10,6 +10,7 @@ import {
   GraduationCap, Target, ShoppingCart, Truck, Zap, Package,
 } from "lucide-react";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
+import CompTrackLogo from "@/components/CompTrackLogo";
 import { useFactures, useNotifications } from "@/lib/store";
 
 interface NavItem {
@@ -80,18 +81,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex flex-col h-full">
 
       {/* Logo */}
-      <div className="px-4 py-5 border-b" style={{ borderColor: "var(--border)" }}>
-        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs font-mono flex-shrink-0"
-            style={{ background: "var(--gold)", color: "var(--navy)" }}
-          >
-            CT
-          </div>
-          <div>
-            <p className="font-bold text-sm leading-none">CompTrack</p>
-            <p className="text-xs leading-none mt-0.5" style={{ color: "var(--text3)" }}>v2.0 · OHADA</p>
-          </div>
+      <div className="px-4 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <CompTrackLogo size="sm" />
         </Link>
       </div>
 
