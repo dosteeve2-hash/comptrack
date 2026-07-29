@@ -3,6 +3,7 @@ import {
   TrendingUp, FileText, BarChart3, Users, Shield, Zap,
   ArrowRight, CheckCircle2, Globe, DollarSign, Star,
 } from "lucide-react";
+import CompTrackLogo from "@/components/CompTrackLogo";
 
 export default function HomePage() {
   return (
@@ -18,15 +19,9 @@ export default function HomePage() {
         }}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs font-mono"
-              style={{ background: "var(--gold)", color: "var(--navy)" }}
-            >
-              CT
-            </div>
-            <span className="font-bold text-lg tracking-tight">CompTrack</span>
-          </div>
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <CompTrackLogo size="sm" />
+          </Link>
           <nav className="hidden md:flex items-center gap-8">
             {[
               { label: "Fonctionnalités", href: "#features" },
