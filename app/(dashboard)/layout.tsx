@@ -241,12 +241,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span
-                className="absolute top-1 right-1 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold px-1"
-                style={{ background: "var(--gold)", color: "var(--navy)" }}
-              >
-                3
-              </span>
+              {notifsNonLues > 0 && (
+                <span
+                  className="absolute top-1 right-1 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold px-1"
+                  style={{ background: "var(--gold)", color: "var(--navy)" }}
+                >
+                  {notifsNonLues}
+                </span>
+              )}
             </Link>
 
             <button
