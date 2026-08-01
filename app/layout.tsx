@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata: Metadata = {
   title: "CompTrack — Comptabilité SaaS pour PME africaines",
@@ -29,7 +30,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        {children}
+        <ScrollToTop />
+      </body>
     </html>
   );
 }

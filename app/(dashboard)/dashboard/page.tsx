@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  LabelList,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -104,6 +107,30 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     </div>
   );
 };
+
+// ─── Données mock — PME africaine 12 mois (XOF) ──────────────────────────────
+const MOCK_12_MOIS = [
+  { mois: 'Aoû', revenus: 2_850_000, depenses: 1_420_000, benefice: 1_430_000 },
+  { mois: 'Sep', revenus: 3_120_000, depenses: 1_680_000, benefice: 1_440_000 },
+  { mois: 'Oct', revenus: 2_960_000, depenses: 1_540_000, benefice: 1_420_000 },
+  { mois: 'Nov', revenus: 3_480_000, depenses: 1_920_000, benefice: 1_560_000 },
+  { mois: 'Déc', revenus: 4_250_000, depenses: 2_100_000, benefice: 2_150_000 },
+  { mois: 'Jan', revenus: 2_680_000, depenses: 1_380_000, benefice: 1_300_000 },
+  { mois: 'Fév', revenus: 2_940_000, depenses: 1_560_000, benefice: 1_380_000 },
+  { mois: 'Mar', revenus: 3_200_000, depenses: 1_640_000, benefice: 1_560_000 },
+  { mois: 'Avr', revenus: 3_560_000, depenses: 1_780_000, benefice: 1_780_000 },
+  { mois: 'Mai', revenus: 3_890_000, depenses: 1_950_000, benefice: 1_940_000 },
+  { mois: 'Jun', revenus: 4_100_000, depenses: 2_050_000, benefice: 2_050_000 },
+  { mois: 'Jul', revenus: 3_750_000, depenses: 1_820_000, benefice: 1_930_000 },
+]
+
+const MOCK_TOP_DEP = [
+  { nom: 'Matières 1ères', montant: 820_000, couleur: '#ef4444' },
+  { nom: 'Transport',      montant: 340_000, couleur: '#f59e0b' },
+  { nom: 'Salaires',       montant: 280_000, couleur: '#8b5cf6' },
+  { nom: 'Loyer & charges',montant: 185_000, couleur: '#3b82f6' },
+  { nom: 'Marketing',      montant: 125_000, couleur: '#ec4899' },
+]
 
 export default function DashboardPage() {
   const [txList] = useTransactions();
@@ -318,6 +345,25 @@ export default function DashboardPage() {
   const topClients = computeTopClients(facturesList, 3);
   const topProduits = computeTopProduits(facturesList, 5);
 
+  // ── Analytics avancés ──────────────────────────────────────────────────────
+  const caMonth = kpisMoisActuel.revenusMois
+  const tauxBenefice = caMonth > 0 ? Math.round((kpisMoisActuel.beneficeNet / caMonth) * 100) : 49
+  const facturesEnAttente = facturesList.filter(f => ['en_attente', 'envoyee'].includes(f.statut))
+  const montantEnAttente = facturesEnAttente.reduce((s, f) => s + f.montant, 0)
+  const depensesCritiques = kpisMoisActuel.depensesMois || MOCK_TOP_DEP.reduce((s, c) => s + c.montant, 0)
+  const chartData12 = donneesMensuelles.length >= 3 ? computeDonneesMensuelles(txList, 12) : MOCK_12_MOIS
+  const barData = topCategoriesDepenses.length >= 2 ? topCategoriesDepenses : MOCK_TOP_DEP
+  const pieRevDep = (() => {
+    const rev = kpisMoisActuel.revenusMois || MOCK_12_MOIS[11].revenus
+    const dep = kpisMoisActuel.depensesMois || MOCK_12_MOIS[11].depenses
+    const ben = Math.max(0, rev - dep)
+    return [
+      { name: 'Recettes', value: rev, color: '#22d98a' },
+      { name: 'Dépenses', value: dep, color: '#ef4444' },
+      { name: 'Bénéfice', value: ben, color: '#f0a832' },
+    ]
+  })()
+
   return (
     <div className="space-y-6 animate-fade-in">
 
@@ -499,7 +545,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="font-semibold">Revenus vs Dépenses</h3>
               <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
-                6 derniers mois
+                12 derniers mois
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs">
@@ -527,7 +573,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={donneesMensuelles} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <AreaChart data={chartData12} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
@@ -625,6 +671,159 @@ export default function DashboardPage() {
                     <span className="font-mono font-medium">
                       {formatMontant(cat.montant)}
                     </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── Analytics KPI cards ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            label: 'CA du mois',
+            value: formatMontant(caMonth || MOCK_12_MOIS[11].revenus),
+            sub: 'Chiffre d\'affaires',
+            color: 'var(--gold)',
+            icon: '💰',
+          },
+          {
+            label: 'Taux bénéfice',
+            value: `${tauxBenefice} %`,
+            sub: 'Marge nette',
+            color: tauxBenefice >= 30 ? 'var(--green)' : tauxBenefice >= 10 ? 'var(--amber)' : 'var(--red)',
+            icon: '📈',
+          },
+          {
+            label: 'Factures en attente',
+            value: facturesEnAttente.length > 0 ? formatMontant(montantEnAttente) : '—',
+            sub: `${facturesEnAttente.length} facture${facturesEnAttente.length !== 1 ? 's' : ''}`,
+            color: 'var(--cyan)',
+            icon: '📋',
+          },
+          {
+            label: 'Dépenses ce mois',
+            value: formatMontant(depensesCritiques),
+            sub: kpisMoisActuel.depensesMois > kpisMoisActuel.revenusMois * 0.7 ? '⚠ Niveau élevé' : 'Sous contrôle',
+            color: kpisMoisActuel.depensesMois > kpisMoisActuel.revenusMois * 0.7 ? 'var(--red)' : 'var(--green)',
+            icon: '💸',
+          },
+        ].map((kpi, i) => (
+          <div
+            key={i}
+            className="p-5 rounded-2xl border transition-all hover:-translate-y-0.5"
+            style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium" style={{ color: 'var(--text2)' }}>{kpi.label}</p>
+              <span className="text-base">{kpi.icon}</span>
+            </div>
+            <p className="text-xl font-bold font-mono mb-1" style={{ color: kpi.color }}>{kpi.value}</p>
+            <p className="text-xs" style={{ color: 'var(--text2)' }}>{kpi.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── BarChart top 5 catégories + PieChart Recettes/Dépenses/Bénéfice ── */}
+      <div className="grid lg:grid-cols-5 gap-6">
+
+        {/* BarChart horizontal — top 5 catégories dépenses */}
+        <div
+          className="lg:col-span-3 p-6 rounded-2xl border"
+          style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}
+        >
+          <div className="mb-5">
+            <h3 className="font-semibold">Top 5 catégories de dépenses</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>Répartition mensuelle</p>
+          </div>
+          {!mounted ? (
+            <div className="h-52 rounded-xl animate-pulse" style={{ background: 'var(--bg3)' }} />
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 50, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fill: 'var(--text2)', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="nom"
+                  width={110}
+                  tick={{ fill: 'var(--text2)', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="montant" name="Dépenses" radius={[0, 6, 6, 0]} barSize={18}>
+                  {barData.map((entry, i) => (
+                    <Cell key={i} fill={entry.couleur} />
+                  ))}
+                  <LabelList
+                    dataKey="montant"
+                    position="right"
+                    formatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+                    style={{ fill: 'var(--text2)', fontSize: 10 }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* PieChart Recettes / Dépenses / Bénéfice net */}
+        <div
+          className="lg:col-span-2 p-6 rounded-2xl border"
+          style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}
+        >
+          <div className="mb-4">
+            <h3 className="font-semibold">Vue d&apos;ensemble mensuelle</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>Recettes / Dépenses / Bénéfice</p>
+          </div>
+          {!mounted ? (
+            <div className="h-40 rounded-xl animate-pulse" style={{ background: 'var(--bg3)' }} />
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={150}>
+                <PieChart>
+                  <Pie
+                    data={pieRevDep}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={38}
+                    outerRadius={62}
+                    dataKey="value"
+                    strokeWidth={0}
+                  >
+                    {pieRevDep.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number) => formatMontant(v)}
+                    contentStyle={{
+                      background: 'var(--bg3)',
+                      border: '1px solid var(--border2)',
+                      borderRadius: 8,
+                      color: 'var(--text)',
+                      fontSize: 11,
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2 mt-3">
+                {pieRevDep.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                      <span style={{ color: 'var(--text2)' }}>{item.name}</span>
+                    </div>
+                    <span className="font-mono font-semibold">{formatMontant(item.value)}</span>
                   </div>
                 ))}
               </div>

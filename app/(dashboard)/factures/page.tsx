@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Download, X, Printer, Eye, ChevronDown, Send, CheckCircle2, ArrowRight } from "lucide-react";
 import type { Facture, FactureArticle, Transaction } from "@/lib/data";
+import { FacturePDF } from "@/components/FacturePDF";
 import { useClients, useFactures, useTransactions } from "@/lib/store";
 import { formatMontant, formatDate } from "@/lib/utils";
 
@@ -324,14 +325,7 @@ export default function FacturesPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handlePrint(f)}
-                          className="p-1.5 rounded-lg transition-all hover:opacity-70"
-                          style={{ color: "var(--text2)" }}
-                          title="Imprimer / PDF"
-                        >
-                          <Printer className="w-4 h-4" />
-                        </button>
+                        <FacturePDF facture={f} entrepriseNom={entrepriseNom} />
                         {statutSuivant[f.statut] && (
                           <button
                             onClick={() => handleAvancerStatut(f.id)}
