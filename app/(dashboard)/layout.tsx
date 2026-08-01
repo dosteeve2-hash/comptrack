@@ -34,6 +34,7 @@ const baseNavItems: NavItem[] = [
   { href: "/budgets",        label: "Budgets",          icon: ShoppingCart    },
   { href: "/budget",         label: "Enveloppes",       icon: Wallet          },
   { href: "/objectifs",      label: "Objectifs",        icon: Target          },
+  { href: "/previsions",     label: "Prévisions",       icon: TrendingUp      },
   { href: "/rapports",       label: "Rapports",         icon: BarChart3       },
   { href: "/notifications",  label: "Notifications",    icon: Bell            },
   { href: "/parametres",     label: "Paramètres",       icon: Settings        },
