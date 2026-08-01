@@ -23,6 +23,7 @@ export const navItems: NavItem[] = [
   { href: '/fournisseurs',  label: 'Fournisseurs',    icon: Truck           },
   { href: '/budgets',       label: 'Budgets',         icon: ShoppingCart    },
   { href: '/objectifs',     label: 'Objectifs',       icon: Target          },
+  { href: '/previsions',    label: 'Prévisions',      icon: TrendingUp      },
   { href: '/rapports',      label: 'Rapports',        icon: BarChart3       },
   { href: '/bilan',         label: 'Bilan',           icon: Scale           },
   { href: '/tresorerie',    label: 'Trésorerie',      icon: Wallet          },
