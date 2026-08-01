@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -13,9 +13,12 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 import type { LucideIcon } from "lucide-react";
 import { Download, BookOpen, Scale, TrendingUp } from "lucide-react";
+import EcheancierPaiements from "@/components/EcheancierPaiements";
 import { categories } from "@/lib/data";
 import {
   computeDonneesMensuelles,
@@ -149,6 +152,138 @@ export default function RapportsPage() {
   const beneficeNet = totalRevenus - totalDepenses;
   const margeNette = totalRevenus > 0 ? Math.round((beneficeNet / totalRevenus) * 100) : 0;
 
+  // Données fictives de démo quand aucune transaction n'existe
+  const DONNEES_DEMO = [
+    { mois: "Mar", revenus: 850000, depenses: 320000, benefice: 530000 },
+    { mois: "Avr", revenus: 920000, depenses: 410000, benefice: 510000 },
+    { mois: "Mai", revenus: 1100000, depenses: 380000, benefice: 720000 },
+    { mois: "Jun", revenus: 980000, depenses: 450000, benefice: 530000 },
+    { mois: "Jul", revenus: 1250000, depenses: 520000, benefice: 730000 },
+    { mois: "Aoû", revenus: 1180000, depenses: 490000, benefice: 690000 },
+  ];
+  const donneesEffectives = donneesMensuelles.length > 0 ? donneesMensuelles : DONNEES_DEMO;
+
+  // Export PDF jsPDF A4 — header Navy/Gold + données mensuelles
+  const handleExportPDF = useCallback(async () => {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const W = 210;
+    const margin = 15;
+    let y = 0;
+
+    // ── Header Navy ──
+    doc.setFillColor(10, 22, 40);
+    doc.rect(0, 0, W, 48, "F");
+    doc.setFillColor(212, 175, 55);
+    doc.rect(0, 48, W, 2.5, "F");
+
+    // Titre
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.setTextColor(212, 175, 55);
+    doc.text("RAPPORT FINANCIER", W / 2, 22, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(235, 244, 255);
+    const periodeLabel =
+      donneesEffectives.length > 0
+        ? `${donneesEffectives[0].mois} – ${donneesEffectives[donneesEffectives.length - 1].mois} ${new Date().getFullYear()}`
+        : "6 derniers mois";
+    doc.text(`Période : ${periodeLabel}`, W / 2, 31, { align: "center" });
+    doc.setTextColor(139, 171, 201);
+    doc.text(`Généré le ${new Date().toLocaleDateString("fr-FR")} · CompTrack`, W / 2, 39, { align: "center" });
+
+    y = 62;
+
+    // ── KPIs ──
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(212, 175, 55);
+    doc.text("INDICATEURS CLÉS", margin, y);
+    y += 2;
+    doc.setFillColor(212, 175, 55);
+    doc.rect(margin, y, 40, 0.5, "F");
+    y += 8;
+
+    const kpis = [
+      { label: "Chiffre d'affaires", value: formatMontant(totalRevenus) + " FCFA" },
+      { label: "Dépenses totales",    value: formatMontant(totalDepenses) + " FCFA" },
+      { label: "Bénéfice net",        value: formatMontant(beneficeNet) + " FCFA" },
+      { label: "Taux de marge",       value: margeNette + "%" },
+    ];
+
+    kpis.forEach((kpi, i) => {
+      const col = i % 2;
+      const colX = margin + col * (W / 2 - margin / 2 + 2);
+      const rowY = y + Math.floor(i / 2) * 24;
+
+      doc.setFillColor(14, 31, 61);
+      doc.roundedRect(colX, rowY - 5, W / 2 - margin - 4, 20, 2, 2, "F");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(139, 171, 201);
+      doc.text(kpi.label, colX + 5, rowY + 1);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(235, 244, 255);
+      doc.text(kpi.value, colX + 5, rowY + 11);
+    });
+
+    y += 56;
+
+    // ── Tableau mensuel ──
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(212, 175, 55);
+    doc.text("ÉVOLUTION MENSUELLE", margin, y);
+    y += 2;
+    doc.setFillColor(212, 175, 55);
+    doc.rect(margin, y, 45, 0.5, "F");
+    y += 8;
+
+    // En-tête tableau
+    doc.setFillColor(10, 22, 40);
+    doc.rect(margin, y, W - 2 * margin, 8, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(212, 175, 55);
+    doc.text("MOIS",      margin + 5, y + 5.5);
+    doc.text("REVENUS",   105, y + 5.5, { align: "right" });
+    doc.text("DÉPENSES",  145, y + 5.5, { align: "right" });
+    doc.text("BÉNÉFICE",  W - margin - 3, y + 5.5, { align: "right" });
+    y += 10;
+
+    donneesEffectives.forEach((row, i) => {
+      if (i % 2 === 0) {
+        doc.setFillColor(14, 31, 61);
+        doc.rect(margin, y - 3, W - 2 * margin, 8, "F");
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(235, 244, 255);
+      doc.text(row.mois, margin + 5, y + 2.5);
+      doc.setTextColor(34, 197, 94);
+      doc.text(formatMontant(row.revenus), 105, y + 2.5, { align: "right" });
+      doc.setTextColor(239, 68, 68);
+      doc.text(formatMontant(row.depenses), 145, y + 2.5, { align: "right" });
+      if (row.benefice >= 0) doc.setTextColor(34, 197, 94);
+      else doc.setTextColor(239, 68, 68);
+      doc.text(formatMontant(row.benefice), W - margin - 3, y + 2.5, { align: "right" });
+      y += 8;
+    });
+
+    // ── Footer ──
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(139, 171, 201);
+    doc.text(`Rapport généré automatiquement par CompTrack · ${new Date().toLocaleDateString("fr-FR")}`, W / 2, 285, { align: "center" });
+    doc.setFillColor(212, 175, 55);
+    doc.rect(0, 288, W, 2, "F");
+
+    doc.save("rapport-financier.pdf");
+  }, [totalRevenus, totalDepenses, beneficeNet, margeNette, donneesEffectives]);
+
   const anneeActuelle = new Date().getFullYear();
 
   const donneesTrimestre = [
@@ -198,12 +333,12 @@ export default function RapportsPage() {
           </p>
         </div>
         <button
-          onClick={() => window.print()}
+          onClick={handleExportPDF}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80 no-print"
           style={{ border: "1px solid var(--border2)", color: "var(--text2)" }}
         >
           <Download className="w-4 h-4" />
-          Exporter
+          Exporter PDF
         </button>
       </div>
 
@@ -514,10 +649,10 @@ export default function RapportsPage() {
       {/* KPI summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Revenus", value: totalRevenus, color: "var(--green)" },
-          { label: "Total Dépenses", value: totalDepenses, color: "var(--red)" },
+          { label: "Chiffre d'affaires", value: totalRevenus, color: "var(--green)" },
+          { label: "Dépenses", value: totalDepenses, color: "var(--red)" },
           { label: "Bénéfice net", value: beneficeNet, color: "var(--blue)" },
-          { label: "Marge nette", value: null, pct: margeNette, color: "var(--amber)" },
+          { label: "Taux de marge", value: null, pct: margeNette, color: "var(--amber)" },
         ].map((s, i) => (
           <div
             key={i}
@@ -644,6 +779,56 @@ export default function RapportsPage() {
         </div>
       </div>
 
+      {/* LineChart — évolution du bénéfice net */}
+      <div
+        className="p-6 rounded-2xl border"
+        style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="font-semibold">Évolution du bénéfice net</h3>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
+              6 derniers mois
+            </p>
+          </div>
+          <span className="flex items-center gap-1.5 text-xs">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#00D4FF" }} />
+            Bénéfice net
+          </span>
+        </div>
+        {!mounted ? (
+          <div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
+        ) : (
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={donneesEffectives} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+              <XAxis
+                dataKey="mois"
+                tick={{ fill: "var(--text2)", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: "var(--text2)", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `${(v / 1000000).toFixed(1)}M`}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Line
+                type="monotone"
+                dataKey="benefice"
+                name="Bénéfice"
+                stroke="#00D4FF"
+                strokeWidth={2.5}
+                dot={{ fill: "#00D4FF", r: 4, strokeWidth: 0 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
       {/* Summary table */}
       <div
         className="rounded-2xl border overflow-hidden"
@@ -721,6 +906,9 @@ export default function RapportsPage() {
       </div>
         </div>
       )}
+
+      {/* Échéancier paiements */}
+      {vueRapport === "apercu" && <EcheancierPaiements />}
     </div>
   );
 }
