@@ -7,8 +7,9 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3, Users, FileText,
   Settings, TrendingUp, TrendingDown, Menu, X, Bell,
-  GraduationCap, Target, ShoppingCart, Truck, Zap, Package,
+  GraduationCap, Target, ShoppingCart, Truck, Zap, Package, Wallet,
 } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import CompTrackLogo from "@/components/CompTrackLogo";
 import { useFactures, useNotifications } from "@/lib/store";
@@ -31,6 +32,7 @@ const baseNavItems: NavItem[] = [
   { href: "/clients",        label: "Clients",          icon: Users           },
   { href: "/fournisseurs",   label: "Fournisseurs",     icon: Truck           },
   { href: "/budgets",        label: "Budgets",          icon: ShoppingCart    },
+  { href: "/budget",         label: "Enveloppes",       icon: Wallet          },
   { href: "/objectifs",      label: "Objectifs",        icon: Target          },
   { href: "/rapports",       label: "Rapports",         icon: BarChart3       },
   { href: "/notifications",  label: "Notifications",    icon: Bell            },
@@ -234,20 +236,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/notifications"
-              className="relative p-2 rounded-lg transition-all hover:opacity-70"
-              style={{ color: "var(--text2)" }}
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              <span
-                className="absolute top-1 right-1 min-w-[14px] h-3.5 flex items-center justify-center rounded-full text-[9px] font-bold px-1"
-                style={{ background: "var(--gold)", color: "var(--navy)" }}
-              >
-                3
-              </span>
-            </Link>
+            <NotificationBell />
 
             <button
               className="md:hidden p-1.5 rounded-lg"
