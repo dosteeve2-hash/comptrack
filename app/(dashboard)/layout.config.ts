@@ -4,7 +4,7 @@ import {
   LayoutDashboard, ArrowLeftRight, BarChart3, Users, FileText,
   Settings, TrendingUp, TrendingDown, Bell,
   GraduationCap, Target, ShoppingCart, Truck, Scale, Wallet,
-  UserCheck, FileSignature,
+  UserCheck, FileSignature, Banknote,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -23,6 +23,7 @@ export const navItems: NavItem[] = [
   { href: '/clients',       label: 'Clients',         icon: Users           },
   { href: '/employes',      label: 'Employés',        icon: UserCheck       },
   { href: '/contrats',      label: 'Contrats',        icon: FileSignature   },
+  { href: '/paie',          label: 'Paie',            icon: Banknote        },
   { href: '/fournisseurs',  label: 'Fournisseurs',    icon: Truck           },
   { href: '/budgets',       label: 'Budgets',         icon: ShoppingCart    },
   { href: '/objectifs',     label: 'Objectifs',       icon: Target          },
