@@ -25,6 +25,11 @@ export const metadata: Metadata = {
     description: "La comptabilité simple pour les PME africaines. FCFA, OHADA.",
   },
   robots: { index: true, follow: true },
+  icons: {
+    apple: '/apple-touch-icon.png',
+    icon: '/android-chrome-192x192.png',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
