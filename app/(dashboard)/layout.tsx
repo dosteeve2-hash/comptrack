@@ -8,6 +8,7 @@ import {
   LayoutDashboard, ArrowLeftRight, BarChart3, Users, FileText,
   Settings, TrendingUp, TrendingDown, Menu, X, Bell,
   GraduationCap, Target, ShoppingCart, Truck, Zap, Package, Wallet,
+  Gauge,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
@@ -34,6 +35,7 @@ const baseNavItems: NavItem[] = [
   { href: "/budgets",        label: "Budgets",          icon: ShoppingCart    },
   { href: "/budget",         label: "Enveloppes",       icon: Wallet          },
   { href: "/objectifs",      label: "Objectifs",        icon: Target          },
+  { href: "/previsions",     label: "Prévisions",       icon: Gauge           },
   { href: "/rapports",       label: "Rapports",         icon: BarChart3       },
   { href: "/notifications",  label: "Notifications",    icon: Bell            },
   { href: "/parametres",     label: "Paramètres",       icon: Settings        },
