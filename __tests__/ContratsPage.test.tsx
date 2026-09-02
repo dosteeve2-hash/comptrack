@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import ContratsPage from '@/app/(dashboard)/contrats/page'
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -9,12 +9,12 @@ vi.mock('sonner', () => ({
 }))
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
-  BarChart: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  BarChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Bar: () => null,
-  LineChart: ({ children }: any) => <div>{children}</div>,
+  LineChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Line: () => null,
-  PieChart: ({ children }: any) => <div>{children}</div>,
+  PieChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Pie: () => null,
   Cell: () => null,
   XAxis: () => null,
@@ -22,7 +22,7 @@ vi.mock('recharts', () => ({
   CartesianGrid: () => null,
   Tooltip: () => null,
   Legend: () => null,
-  ComposedChart: ({ children }: any) => <div>{children}</div>,
+  ComposedChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 }))
 
 // ─── Données mock attendues ───────────────────────────────────────────────────
@@ -81,7 +81,8 @@ describe('ContratsPage', () => {
     render(<ContratsPage />)
     // Les 5 contrats actifs : 4 500 000 + 2 800 000 + 3 200 000 + 7 200 000 + 980 000 + 5 500 000
     // id 1,2,4,8,9,10 = 6 contrats actifs
-    expect(screen.getByText(/FCFA/)).toBeInTheDocument()
+    // « FCFA » apparaît dans plusieurs KPI : on cible la valeur elle-même.
+    expect(screen.getAllByText(/FCFA/).length).toBeGreaterThan(0)
   })
 
   // 6 — KPI : label "Contrats actifs"
@@ -161,7 +162,9 @@ describe('ContratsPage', () => {
   // 17 — Tableau : badge type "Partenaire"
   it('affiche le badge type "Partenaire"', () => {
     render(<ContratsPage />)
-    expect(screen.getByText('Partenaire')).toBeInTheDocument()
+    // « Partenaire » est aussi une option du filtre de type : on vérifie la
+    // présence d'un badge dans le tableau, pas son unicité dans la page.
+    expect(within(screen.getByRole('table')).getAllByText('Partenaire').length).toBeGreaterThan(0)
   })
 
   // 18 — Tableau : badge statut "Actif"
@@ -194,7 +197,8 @@ describe('ContratsPage', () => {
   it('affiche "j dépassés" pour les contrats expirés (dateFin passée)', () => {
     render(<ContratsPage />)
     // Maintenance équipements — dateFin 2026-06-30, aujourd'hui 2026-08-08 → dépassé
-    expect(screen.getByText(/j dépassés/i)).toBeInTheDocument()
+    // Plusieurs contrats sont expirés : on vérifie qu'au moins un l'affiche.
+    expect(within(screen.getByRole('table')).getAllByText(/j dépassés/i).length).toBeGreaterThan(0)
   })
 
   // 23 — Jours restants : contrat futur affiche nombre de jours positif

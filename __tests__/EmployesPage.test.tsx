@@ -10,12 +10,12 @@ vi.mock('sonner', () => ({
 }))
 
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
-  BarChart: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  BarChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Bar: () => null,
-  LineChart: ({ children }: any) => <div>{children}</div>,
+  LineChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Line: () => null,
-  PieChart: ({ children }: any) => <div>{children}</div>,
+  PieChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Pie: () => null,
   Cell: () => null,
   XAxis: () => null,
@@ -23,7 +23,7 @@ vi.mock('recharts', () => ({
   CartesianGrid: () => null,
   Tooltip: () => null,
   Legend: () => null,
-  ComposedChart: ({ children }: any) => <div>{children}</div>,
+  ComposedChart: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 }))
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -82,7 +82,9 @@ describe('EmployesPage', () => {
   // 6 — KPI : Masse salariale valeur formatée (somme = 1 850 000)
   it('affiche la masse salariale formatée en FCFA', () => {
     render(<EmployesPage />)
-    expect(screen.getByText(/1.*850.*000.*FCFA/i)).toBeInTheDocument()
+    // Somme des 10 salaires = 2 050 000. Intl.NumberFormat('fr-FR') insère
+    // des espaces fines insécables, que \\s couvre.
+    expect(screen.getByText(/2\s*050\s*000\s*FCFA/)).toBeInTheDocument()
   })
 
   // 7 — KPI : Fourchette label
@@ -100,8 +102,11 @@ describe('EmployesPage', () => {
   // 9 — Tableau : colonnes en-têtes
   it('affiche les colonnes du tableau', () => {
     render(<EmployesPage />)
+    // « Département » est aussi un libellé de filtre : on cible les en-têtes
+    // du tableau, ce que ce test entend vérifier.
+    const entetes = within(screen.getByRole('table'))
     for (const h of ['Employé', 'Département', 'Poste', 'Salaire', 'Contrat', 'Statut', 'Entrée']) {
-      expect(screen.getByText(h)).toBeInTheDocument()
+      expect(entetes.getAllByText(h).length).toBeGreaterThan(0)
     }
   })
 
@@ -269,6 +274,7 @@ describe('EmployesPage', () => {
   // 30 — Compteur d'employés dans le sous-titre
   it('affiche le compteur d\'employés dans le sous-titre', () => {
     render(<EmployesPage />)
-    expect(screen.getByText(/10 employés/i)).toBeInTheDocument()
+    // Le compte figure aussi dans un KPI : on vérifie la présence, pas l'unicité.
+    expect(screen.getAllByText(/10 employés/i).length).toBeGreaterThan(0)
   })
 })
