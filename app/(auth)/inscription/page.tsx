@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { supabaseConfigure } from "@/lib/supabase/config";
+import BanniereNonConfigure from "../BanniereNonConfigure";
 
 interface FormState {
   nom: string;
@@ -15,6 +17,7 @@ interface FormState {
 
 export default function InscriptionPage() {
   const router = useRouter();
+  const configure = supabaseConfigure();
   const [form, setForm] = useState<FormState>({ nom: "", email: "", nomEntreprise: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +31,7 @@ export default function InscriptionPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    if (!configure) return;
     if (!form.nom || !form.email || !form.password) {
       setError("Veuillez remplir tous les champs obligatoires.");
       return;
@@ -72,6 +76,7 @@ export default function InscriptionPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold mb-2">Créez votre compte</h1>
           <p className="text-sm" style={{ color: "var(--text2)" }}>Gratuit, sans carte bancaire. Prêt en 2 minutes.</p>
+          {!configure && <div className="mt-6"><BanniereNonConfigure /></div>}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -81,7 +86,7 @@ export default function InscriptionPage() {
               <input
                 id={field.name} name={field.name} type={field.type}
                 value={form[field.name]} onChange={handleChange}
-                placeholder={field.placeholder} required={field.required}
+                placeholder={field.placeholder} required={field.required} disabled={!configure}
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                 style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }}
               />
@@ -95,7 +100,7 @@ export default function InscriptionPage() {
                 id="password" name="password"
                 type={showPassword ? "text" : "password"}
                 value={form.password} onChange={handleChange}
-                placeholder="8 caractères minimum" required
+                placeholder="8 caractères minimum" required disabled={!configure}
                 className="w-full px-4 py-3 pr-12 rounded-xl text-sm outline-none transition-all"
                 style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }}
               />
@@ -114,7 +119,7 @@ export default function InscriptionPage() {
             </div>
           )}
 
-          <button type="submit" disabled={isLoading}
+          <button type="submit" disabled={isLoading || !configure}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: "var(--gold)", color: "var(--navy)" }}>
             {isLoading
