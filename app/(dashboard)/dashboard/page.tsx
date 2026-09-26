@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { categories } from "@/lib/data";
+import { RevenuesChart } from "@/components/RevenuesChart";
 import {
   computeDonneesMensuelles,
   computeKpisMoisActuel,
@@ -678,6 +679,9 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* ── Graphique Revenus/Dépenses 6 mois ────────────────────────────── */}
+      <RevenuesChart />
 
       {/* ── Analytics KPI cards ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
