@@ -1,449 +1,309 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  LineChart,
-  Line,
-  ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, ReferenceLine, Cell,
 } from "recharts";
-import { Download } from "lucide-react";
-import { formatMontant } from "@/lib/utils";
+import {
+  TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
+  Gauge, ArrowRight, Calendar, Wallet,
+} from "lucide-react";
 
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; color: string }>;
-  label?: string;
+// ─── Constantes de style ────────────────────────────────────────────────────
+const GOLD   = "#D4AF37";
+const CYAN   = "#00BCD4";
+const GREEN  = "#10B981";
+const RED    = "#EF4444";
+const ORANGE = "#F59E0B";
+
+// ─── Données historiques (12 derniers mois) ─────────────────────────────────
+const HISTORIQUE = [
+  { mois: "Aoû 25", revenus: 2_850_000, depenses: 1_420_000 },
+  { mois: "Sep 25", revenus: 3_120_000, depenses: 1_680_000 },
+  { mois: "Oct 25", revenus: 2_960_000, depenses: 1_540_000 },
+  { mois: "Nov 25", revenus: 3_480_000, depenses: 1_920_000 },
+  { mois: "Déc 25", revenus: 4_250_000, depenses: 2_100_000 },
+  { mois: "Jan 26", revenus: 2_680_000, depenses: 1_380_000 },
+  { mois: "Fév 26", revenus: 2_940_000, depenses: 1_560_000 },
+  { mois: "Mar 26", revenus: 3_200_000, depenses: 1_640_000 },
+  { mois: "Avr 26", revenus: 3_560_000, depenses: 1_780_000 },
+  { mois: "Mai 26", revenus: 3_890_000, depenses: 1_950_000 },
+  { mois: "Jun 26", revenus: 4_100_000, depenses: 2_050_000 },
+  { mois: "Jul 26", revenus: 3_750_000, depenses: 1_820_000 },
+];
+
+// ─── Scénarios de croissance ────────────────────────────────────────────────
+const SCENARIOS = [
+  { id: "pessimiste", label: "Pessimiste",  revCroiss: -0.03, depCroiss: 0.04,  color: RED    },
+  { id: "realiste",   label: "Réaliste",    revCroiss: 0.04,  depCroiss: 0.02,  color: GOLD   },
+  { id: "optimiste",  label: "Optimiste",   revCroiss: 0.09,  depCroiss: 0.01,  color: GREEN  },
+];
+
+const MOIS_FUTURS = ["Aoû 26", "Sep 26", "Oct 26", "Nov 26", "Déc 26", "Jan 27"];
+
+// ─── Utilitaires ────────────────────────────────────────────────────────────
+function fcfa(n: number) {
+  return new Intl.NumberFormat("fr-FR").format(Math.round(n)) + " FCFA";
 }
 
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+function projeter(scenarioId: string, tresoActuelle: number) {
+  const sc = SCENARIOS.find(s => s.id === scenarioId)!;
+  const lastRev = HISTORIQUE.at(-1)!.revenus;
+  const lastDep = HISTORIQUE.at(-1)!.depenses;
+
+  return MOIS_FUTURS.map((mois, i) => {
+    const rev = lastRev * Math.pow(1 + sc.revCroiss, i + 1);
+    const dep = lastDep * Math.pow(1 + sc.depCroiss, i + 1);
+    const net = rev - dep;
+    tresoActuelle += net;
+    return {
+      mois,
+      revenus: Math.round(rev),
+      depenses: Math.round(dep),
+      net: Math.round(net),
+      tresorerie: Math.round(tresoActuelle),
+      projected: true,
+    };
+  });
+}
+
+// ─── Tooltip custom ─────────────────────────────────────────────────────────
+function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      className="p-3 rounded-xl text-xs shadow-lg"
-      style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }}
-    >
-      <p className="font-semibold mb-2">{label}</p>
-      {payload.map((entry, i) => (
-        <p key={i} className="mb-0.5" style={{ color: entry.color }}>
-          {entry.name} : {formatMontant(entry.value)}
+    <div className="p-3 rounded-xl text-xs shadow-lg"
+      style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", minWidth: 160 }}>
+      <p className="font-bold mb-2">{label}</p>
+      {payload.map((e: any, i: number) => (
+        <p key={i} style={{ color: e.color }} className="mb-0.5">
+          {e.name}: {fcfa(e.value)}
         </p>
       ))}
     </div>
   );
-};
-
-interface PosteBudgetaire {
-  categorie: string;
-  budgetAlloue: number;
-  realise: number;
 }
 
-const postesBudgetaires: PosteBudgetaire[] = [
-  { categorie: "Salaires",              budgetAlloue: 4_500_000, realise: 4_200_000 },
-  { categorie: "Loyer & Charges",       budgetAlloue: 1_800_000, realise: 1_800_000 },
-  { categorie: "Marketing",             budgetAlloue:   900_000, realise:   650_000 },
-  { categorie: "Transport & Livraison", budgetAlloue:   750_000, realise:   610_000 },
-  { categorie: "Fournitures",           budgetAlloue:   600_000, realise:   280_000 },
-  { categorie: "Maintenance",           budgetAlloue:   400_000, realise:   190_000 },
-  { categorie: "Impôts & Taxes",        budgetAlloue: 1_200_000, realise: 1_150_000 },
-  { categorie: "Fonds de Roulement",    budgetAlloue: 4_850_000, realise:   320_000 },
-];
-
-function getStatut(pctExecution: number): { label: string; emoji: string; color: string } {
-  if (pctExecution > 80) return { label: "En ligne", emoji: "🟢", color: "var(--green)" };
-  if (pctExecution >= 50) return { label: "Attention", emoji: "🟠", color: "var(--amber)" };
-  return { label: "Critique", emoji: "🔴", color: "var(--red)" };
-}
-
-const donneesBudgetMensuel = [
-  { mois: "Jan · Revenus",   budgetPrevu: 1_100_000, realise:   980_000 },
-  { mois: "Jan · Dépenses",  budgetPrevu:   750_000, realise:   720_000 },
-  { mois: "Fév · Revenus",   budgetPrevu: 1_150_000, realise: 1_050_000 },
-  { mois: "Fév · Dépenses",  budgetPrevu:   780_000, realise:   760_000 },
-  { mois: "Mar · Revenus",   budgetPrevu: 1_200_000, realise: 1_180_000 },
-  { mois: "Mar · Dépenses",  budgetPrevu:   800_000, realise:   810_000 },
-  { mois: "Avr · Revenus",   budgetPrevu: 1_250_000, realise: 1_300_000 },
-  { mois: "Avr · Dépenses",  budgetPrevu:   820_000, realise:   790_000 },
-  { mois: "Mai · Revenus",   budgetPrevu: 1_300_000, realise: 1_250_000 },
-  { mois: "Mai · Dépenses",  budgetPrevu:   850_000, realise:   870_000 },
-  { mois: "Jun · Revenus",   budgetPrevu: 1_350_000, realise: 1_420_000 },
-  { mois: "Jun · Dépenses",  budgetPrevu:   880_000, realise:   860_000 },
-];
-
-const donneesBeneficePrevision = [
-  { mois: "Jan", prevision: 350_000, reel: 260_000 },
-  { mois: "Fév", prevision: 370_000, reel: 290_000 },
-  { mois: "Mar", prevision: 400_000, reel: 370_000 },
-  { mois: "Avr", prevision: 430_000, reel: 510_000 },
-  { mois: "Mai", prevision: 450_000, reel: 380_000 },
-  { mois: "Jun", prevision: 470_000, reel: 560_000 },
-  { mois: "Jul", prevision: 490_000, reel: 430_000 },
-  { mois: "Aoû", prevision: 510_000, reel: 470_000 },
-  { mois: "Sep", prevision: 530_000, reel: 480_000 },
-  { mois: "Oct", prevision: 550_000, reel: 520_000 },
-  { mois: "Nov", prevision: 580_000, reel: 540_000 },
-  { mois: "Déc", prevision: 610_000, reel: 590_000 },
-];
-
-const BUDGET_ANNUEL_TOTAL = 15_000_000;
-const DEPENSES_PREVUES = 9_200_000;
-const REVENUS_PREVISIONNELS = 14_500_000;
-const TAUX_EXECUTION = 67;
-
+// ─── Page ───────────────────────────────────────────────────────────────────
 export default function PrevisionsPage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [scenario, setScenario] = useState<string>("realiste");
+  const [tresoActuelle] = useState(5_800_000); // FCFA de tréso actuelle (mock)
 
-  const anneeActuelle = new Date().getFullYear();
+  const projections = useMemo(() => projeter(scenario, tresoActuelle), [scenario, tresoActuelle]);
+  const scConfig = SCENARIOS.find(s => s.id === scenario)!;
 
-  const handleExportPDF = useCallback(async () => {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-    const W = 210;
-    const margin = 15;
-    let y = 0;
+  // KPIs de projection
+  const revTotal    = projections.reduce((s, m) => s + m.revenus, 0);
+  const depTotal    = projections.reduce((s, m) => s + m.depenses, 0);
+  const beneficeNet = revTotal - depTotal;
+  const tresoFinale = projections.at(-1)!.tresorerie;
+  const tresoNeg    = projections.findIndex(m => m.tresorerie < 0);
+  const runway      = tresoNeg === -1 ? "6+ mois" : `${tresoNeg} mois`;
+  const sante       = tresoNeg === -1 ? "Sain" : "Risqué";
 
-    // ── Header Navy ──
-    doc.setFillColor(10, 22, 40);
-    doc.rect(0, 0, W, 48, "F");
-    doc.setFillColor(212, 175, 55);
-    doc.rect(0, 48, W, 2.5, "F");
+  // Données combinées pour le graphe principal
+  const avgRevHist = HISTORIQUE.reduce((s, m) => s + m.revenus, 0) / HISTORIQUE.length;
+  const avgDepHist = HISTORIQUE.reduce((s, m) => s + m.depenses, 0) / HISTORIQUE.length;
+  const historique6 = HISTORIQUE.slice(-6).map(m => ({ ...m, projected: false }));
+  const combined = [...historique6, ...projections];
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(212, 175, 55);
-    doc.text("PRÉVISIONS BUDGÉTAIRES", W / 2, 22, { align: "center" });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(235, 244, 255);
-    doc.text(`Exercice ${anneeActuelle}`, W / 2, 31, { align: "center" });
-    doc.setTextColor(139, 171, 201);
-    doc.text(`Généré le ${new Date().toLocaleDateString("fr-FR")} · CompTrack`, W / 2, 39, { align: "center" });
-
-    y = 62;
-
-    // ── KPIs ──
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(212, 175, 55);
-    doc.text("INDICATEURS CLÉS", margin, y);
-    y += 2;
-    doc.setFillColor(212, 175, 55);
-    doc.rect(margin, y, 40, 0.5, "F");
-    y += 8;
-
-    const kpis = [
-      { label: "Budget annuel total",     value: formatMontant(BUDGET_ANNUEL_TOTAL) },
-      { label: "Dépenses prévues",        value: formatMontant(DEPENSES_PREVUES) },
-      { label: "Revenus prévisionnels",   value: formatMontant(REVENUS_PREVISIONNELS) },
-      { label: "Taux d'exécution",        value: `${TAUX_EXECUTION}%` },
-    ];
-
-    kpis.forEach((kpi, i) => {
-      const col = i % 2;
-      const colX = margin + col * (W / 2 - margin / 2 + 2);
-      const rowY = y + Math.floor(i / 2) * 24;
-
-      doc.setFillColor(14, 31, 61);
-      doc.roundedRect(colX, rowY - 5, W / 2 - margin - 4, 20, 2, 2, "F");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(139, 171, 201);
-      doc.text(kpi.label, colX + 5, rowY + 1);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(235, 244, 255);
-      doc.text(kpi.value, colX + 5, rowY + 11);
-    });
-
-    y += 56;
-
-    // ── Tableau postes budgétaires ──
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(212, 175, 55);
-    doc.text("POSTES BUDGÉTAIRES", margin, y);
-    y += 2;
-    doc.setFillColor(212, 175, 55);
-    doc.rect(margin, y, 45, 0.5, "F");
-    y += 8;
-
-    doc.setFillColor(10, 22, 40);
-    doc.rect(margin, y, W - 2 * margin, 8, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.setTextColor(212, 175, 55);
-    doc.text("CATÉGORIE",  margin + 5, y + 5.5);
-    doc.text("ALLOUÉ",     105, y + 5.5, { align: "right" });
-    doc.text("RÉALISÉ",    145, y + 5.5, { align: "right" });
-    doc.text("% EXÉC.",    W - margin - 3, y + 5.5, { align: "right" });
-    y += 10;
-
-    postesBudgetaires.forEach((poste, i) => {
-      const pctExecution = poste.budgetAlloue > 0 ? Math.round((poste.realise / poste.budgetAlloue) * 100) : 0;
-      if (i % 2 === 0) {
-        doc.setFillColor(14, 31, 61);
-        doc.rect(margin, y - 3, W - 2 * margin, 8, "F");
-      }
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(235, 244, 255);
-      doc.text(poste.categorie, margin + 5, y + 2.5);
-      doc.setTextColor(139, 171, 201);
-      doc.text(formatMontant(poste.budgetAlloue), 105, y + 2.5, { align: "right" });
-      doc.text(formatMontant(poste.realise), 145, y + 2.5, { align: "right" });
-      doc.setTextColor(pctExecution > 80 ? 34 : pctExecution >= 50 ? 245 : 239, pctExecution > 80 ? 197 : pctExecution >= 50 ? 158 : 68, pctExecution > 80 ? 94 : pctExecution >= 50 ? 11 : 68);
-      doc.text(`${pctExecution}%`, W - margin - 3, y + 2.5, { align: "right" });
-      y += 8;
-    });
-
-    // ── Footer ──
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(139, 171, 201);
-    doc.text(`Rapport généré automatiquement par CompTrack · ${new Date().toLocaleDateString("fr-FR")}`, W / 2, 285, { align: "center" });
-    doc.setFillColor(212, 175, 55);
-    doc.rect(0, 288, W, 2, "F");
-
-    doc.save("previsions-budgetaires.pdf");
-  }, [anneeActuelle]);
+  // Données bénéfice mensuel projeté
+  const benefData = projections.map(m => ({
+    mois: m.mois,
+    net: m.net,
+    color: m.net >= 0 ? GREEN : RED,
+  }));
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
+
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Prévisions Budgétaires</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
-            Exercice {anneeActuelle}
-          </p>
-        </div>
-        <button
-          onClick={handleExportPDF}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-80 no-print"
-          style={{ border: "1px solid var(--border2)", color: "var(--text2)" }}
-        >
-          <Download className="w-4 h-4" />
-          Exporter PDF
-        </button>
+      <div>
+        <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>Prévisions de trésorerie</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--text2)" }}>
+          Projection automatique sur 6 mois · Basé sur votre historique
+        </p>
       </div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Budget Annuel Total",   value: formatMontant(BUDGET_ANNUEL_TOTAL) },
-          { label: "Dépenses Prévues",      value: formatMontant(DEPENSES_PREVUES) },
-          { label: "Revenus Prévisionnels", value: formatMontant(REVENUS_PREVISIONNELS) },
-          { label: "Taux d'Exécution",      value: `${TAUX_EXECUTION}%` },
-        ].map((kpi, i) => (
-          <div
-            key={i}
-            className="p-4 rounded-xl border"
-            style={{ background: "var(--navy)", borderColor: "var(--border)" }}
+      {/* Sélecteur scénario */}
+      <div className="flex flex-wrap gap-2">
+        {SCENARIOS.map(sc => (
+          <button
+            key={sc.id}
+            onClick={() => setScenario(sc.id)}
+            className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={scenario === sc.id
+              ? { background: sc.color, color: "#0A1628" }
+              : { background: "var(--bg3)", color: "var(--text2)", border: "1px solid var(--border)" }}
           >
-            <p className="text-xs mb-1" style={{ color: "var(--text2)" }}>{kpi.label}</p>
-            <p className="font-bold font-mono text-lg" style={{ color: "var(--gold)" }}>{kpi.value}</p>
-          </div>
+            {scenario === sc.id && "▶ "}{sc.label}
+          </button>
+        ))}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm"
+          style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text3)" }}>
+          <Calendar className="w-3.5 h-3.5" />
+          Aoû – Jan 2027
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Revenus projetés",    value: fcfa(revTotal),    icon: TrendingUp,    color: GREEN,  sub: "6 prochains mois" },
+          { label: "Dépenses projetées",  value: fcfa(depTotal),    icon: TrendingDown,  color: RED,    sub: "6 prochains mois" },
+          { label: "Bénéfice net",        value: fcfa(beneficeNet), icon: Wallet,        color: GOLD,   sub: beneficeNet > 0 ? "Positif ✓" : "Déficitaire !" },
+          { label: "Trésorerie finale",   value: fcfa(tresoFinale), icon: Gauge,         color: CYAN,   sub: `Runway : ${runway}` },
+        ].map((kpi, i) => (
+          <motion.div
+            key={kpi.label}
+            className="rounded-2xl p-5"
+            style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring" as const, stiffness: 120, damping: 20, delay: i * 0.06 }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: `${kpi.color}18` }}>
+                <kpi.icon className="w-4 h-4" style={{ color: kpi.color }} />
+              </div>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ background: `${scConfig.color}18`, color: scConfig.color }}>
+                {scConfig.label}
+              </span>
+            </div>
+            <p className="text-lg font-black leading-tight" style={{ color: "var(--text)" }}>{kpi.value}</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>{kpi.label}</p>
+            <p className="text-xs mt-0.5" style={{ color: kpi.color }}>{kpi.sub}</p>
+          </motion.div>
         ))}
       </div>
 
-      {/* BarChart — Budget Prévu vs Réalisé */}
-      <div className="p-6 rounded-2xl border" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-        <div className="flex items-center justify-between mb-6">
+      {/* Alerte runway */}
+      {sante !== "Sain" && (
+        <motion.div className="rounded-xl p-4 flex items-start gap-3"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}
+          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: RED }} />
           <div>
-            <h3 className="font-semibold">Budget Prévu vs Réalisé</h3>
+            <p className="text-sm font-bold" style={{ color: RED }}>Risque de trésorerie en {tresoNeg} mois</p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
-              Revenus et dépenses — Jan à Jun {anneeActuelle}
+              En scénario {scenario}, la trésorerie devient négative. Envisagez de réduire les dépenses ou d'augmenter vos revenus.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded" style={{ background: "var(--navy)", border: "1px solid var(--border2)" }} />
-              Budget Prévu
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded" style={{ background: "var(--gold)" }} />
-              Réalisé
-            </span>
-          </div>
-        </div>
-        {!mounted ? (
-          <div className="h-72 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={donneesBudgetMensuel} barGap={4} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="mois"
-                tick={{ fill: "var(--text2)", fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-                interval={0}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis
-                tick={{ fill: "var(--text2)", fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `${(v / 1000000).toFixed(1)}M`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="budgetPrevu" name="Budget Prévu" fill="#0A1628" stroke="#2a4a72" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="realise" name="Réalisé" fill="#D4AF37" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+        </motion.div>
+      )}
 
-      {/* LineChart — bénéfice net prévision vs réel */}
-      <div className="p-6 rounded-2xl border" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-        <div className="flex items-center justify-between mb-6">
+      {sante === "Sain" && (
+        <motion.div className="rounded-xl p-4 flex items-start gap-3"
+          style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}
+          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: GREEN }} />
           <div>
-            <h3 className="font-semibold">Bénéfice Net — Prévision vs Réel</h3>
+            <p className="text-sm font-bold" style={{ color: GREEN }}>Trésorerie saine sur 6 mois</p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
-              12 mois — {anneeActuelle}
+              En scénario {scenario}, votre trésorerie reste positive sur toute la période. Continuez à surveiller vos dépenses.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#00D4FF" }} />
-              Prévision
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#D4AF37" }} />
-              Réel
-            </span>
+        </motion.div>
+      )}
+
+      {/* Graphe principal : revenus / dépenses historique + projection */}
+      <div className="rounded-2xl p-5" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h3 className="text-sm font-bold" style={{ color: "var(--text)" }}>Flux financiers — 6 mois réels + 6 mois projetés</h3>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>La zone hachurée représente les projections</p>
+          </div>
+          <div className="flex gap-3 text-xs">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded inline-block" style={{ background: GREEN }} /> Revenus</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded inline-block" style={{ background: RED }} /> Dépenses</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded inline-block" style={{ background: ORANGE }} /> Projection</span>
           </div>
         </div>
-        {!mounted ? (
-          <div className="h-48 rounded-xl animate-pulse" style={{ background: "var(--bg3)" }} />
-        ) : (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={donneesBeneficePrevision} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="mois" tick={{ fill: "var(--text2)", fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis
-                tick={{ fill: "var(--text2)", fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `${(v / 1000000).toFixed(1)}M`}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend
-                formatter={(value: string) => <span style={{ color: "var(--text2)", fontSize: 11 }}>{value}</span>}
-              />
-              <Line
-                type="monotone"
-                dataKey="prevision"
-                name="Prévision"
-                stroke="#00D4FF"
-                strokeWidth={2.5}
-                strokeDasharray="5 3"
-                dot={{ fill: "#00D4FF", r: 3, strokeWidth: 0 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="reel"
-                name="Réel"
-                stroke="#D4AF37"
-                strokeWidth={2.5}
-                dot={{ fill: "#D4AF37", r: 3, strokeWidth: 0 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
+        <ResponsiveContainer width="100%" height={240}>
+          <AreaChart data={combined} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+            <defs>
+              <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={GREEN} stopOpacity={0.15} />
+                <stop offset="95%" stopColor={GREEN} stopOpacity={0.01} />
+              </linearGradient>
+              <linearGradient id="gDep" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={RED}   stopOpacity={0.15} />
+                <stop offset="95%" stopColor={RED}   stopOpacity={0.01} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="mois" tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={(v: any) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
+            <Tooltip content={<CustomTooltip />} />
+            <ReferenceLine x="Aoû 26" stroke={ORANGE} strokeDasharray="4 2" label={{ value: "Projection →", position: "insideTopRight", fontSize: 9, fill: ORANGE }} />
+            <Area type="monotone" dataKey="revenus"  name="Revenus"  stroke={GREEN} fill="url(#gRev)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="depenses" name="Dépenses" stroke={RED}   fill="url(#gDep)" strokeWidth={2} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* Table — Postes Budgétaires */}
-      <div className="rounded-2xl border overflow-hidden" style={{ background: "var(--bg2)", borderColor: "var(--border)" }}>
-        <div className="px-6 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-          <h3 className="font-semibold">Postes Budgétaires</h3>
-          <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
-            Suivi de l&apos;exécution par catégorie
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr
-                className="border-b text-xs font-medium uppercase tracking-wider"
-                style={{ borderColor: "var(--border)", color: "var(--text2)" }}
+      {/* Bénéfice mensuel projeté */}
+      <div className="rounded-2xl p-5" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
+        <h3 className="text-sm font-bold mb-4" style={{ color: "var(--text)" }}>Bénéfice mensuel projeté</h3>
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={benefData} barCategoryGap="30%" margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="mois" tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={(v: any) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
+            <Tooltip formatter={(v: any) => [fcfa(v), "Bénéfice net"]} />
+            <ReferenceLine y={0} stroke="var(--border2)" />
+            <Bar dataKey="net" name="Bénéfice net" radius={[4, 4, 0, 0]}>
+              {benefData.map((d, i) => (
+                <Cell key={i} fill={d.color} fillOpacity={0.8} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Tableau détaillé */}
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+        <table className="w-full text-sm">
+          <thead>
+            <tr style={{ background: "var(--bg3)", borderBottom: "1px solid var(--border)" }}>
+              {["Mois", "Revenus proj.", "Dépenses proj.", "Bénéfice net", "Trésorerie cumulée"].map(h => (
+                <th key={h} className="text-left px-4 py-3 text-xs font-semibold" style={{ color: "var(--text2)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {projections.map((m, i) => (
+              <motion.tr
+                key={m.mois}
+                style={{ borderBottom: "1px solid var(--border)", background: i % 2 === 0 ? "var(--bg2)" : "var(--bg3)" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: i * 0.04 }}
               >
-                <th className="text-left px-6 py-3">Catégorie</th>
-                <th className="text-right px-6 py-3">Budget Alloué</th>
-                <th className="text-right px-6 py-3">Réalisé</th>
-                <th className="text-right px-6 py-3">Écart</th>
-                <th className="text-right px-6 py-3">% Exécution</th>
-                <th className="text-left px-6 py-3">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
-              {postesBudgetaires.map((poste, i) => {
-                const ecart = poste.budgetAlloue - poste.realise;
-                const pctExecution = poste.budgetAlloue > 0 ? Math.round((poste.realise / poste.budgetAlloue) * 100) : 0;
-                const statut = getStatut(pctExecution);
-                return (
-                  <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="px-6 py-4 font-medium">{poste.categorie}</td>
-                    <td className="px-6 py-4 text-right font-mono" style={{ color: "var(--text2)" }}>
-                      {formatMontant(poste.budgetAlloue)}
-                    </td>
-                    <td className="px-6 py-4 text-right font-mono" style={{ color: "var(--gold)" }}>
-                      {formatMontant(poste.realise)}
-                    </td>
-                    <td className="px-6 py-4 text-right font-mono" style={{ color: ecart >= 0 ? "var(--green)" : "var(--red)" }}>
-                      {ecart >= 0 ? "+" : ""}{formatMontant(ecart)}
-                    </td>
-                    <td className="px-6 py-4 text-right font-mono">{pctExecution}%</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                        style={{ background: `${statut.color}1a`, color: statut.color }}
-                      >
-                        {statut.emoji} {statut.label}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="border-t font-bold" style={{ borderColor: "var(--border2)", background: "var(--bg3)" }}>
-                <td className="px-6 py-4">Total</td>
-                <td className="px-6 py-4 text-right font-mono" style={{ color: "var(--text2)" }}>
-                  {formatMontant(postesBudgetaires.reduce((s, p) => s + p.budgetAlloue, 0))}
+                <td className="px-4 py-3 font-medium" style={{ color: "var(--text)" }}>{m.mois}</td>
+                <td className="px-4 py-3 tabular-nums" style={{ color: GREEN }}>{fcfa(m.revenus)}</td>
+                <td className="px-4 py-3 tabular-nums" style={{ color: RED }}>{fcfa(m.depenses)}</td>
+                <td className="px-4 py-3 tabular-nums font-semibold" style={{ color: m.net >= 0 ? GREEN : RED }}>
+                  {m.net >= 0 ? "+" : ""}{fcfa(m.net)}
                 </td>
-                <td className="px-6 py-4 text-right font-mono" style={{ color: "var(--gold)" }}>
-                  {formatMontant(postesBudgetaires.reduce((s, p) => s + p.realise, 0))}
+                <td className="px-4 py-3 tabular-nums" style={{ color: m.tresorerie >= 0 ? "var(--text)" : RED }}>
+                  {fcfa(m.tresorerie)}
+                  {m.tresorerie < 0 && <span className="ml-1.5 text-xs">⚠️</span>}
                 </td>
-                <td className="px-6 py-4 text-right font-mono" style={{ color: "var(--green)" }}>
-                  {formatMontant(postesBudgetaires.reduce((s, p) => s + (p.budgetAlloue - p.realise), 0))}
-                </td>
-                <td className="px-6 py-4 text-right font-mono">
-                  {Math.round(
-                    (postesBudgetaires.reduce((s, p) => s + p.realise, 0) /
-                      postesBudgetaires.reduce((s, p) => s + p.budgetAlloue, 0)) *
-                      100
-                  )}%
-                </td>
-                <td className="px-6 py-4" />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      {/* Disclaimer */}
+      <p className="text-xs text-center" style={{ color: "var(--text3)" }}>
+        Les projections sont basées sur la tendance des 12 derniers mois et le scénario sélectionné.
+        Elles ne constituent pas une garantie financière.
+      </p>
     </div>
   );
 }
