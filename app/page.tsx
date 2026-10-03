@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
-  TrendingUp, FileText, BarChart3, Users, Shield, Zap,
-  ArrowRight, CheckCircle2, Globe, DollarSign, Star,
+  TrendingUp, FileText, BarChart3, Shield, Zap,
+  ArrowRight, CheckCircle2, Globe, DollarSign,
 } from "lucide-react";
 import CompTrackLogo from "@/components/CompTrackLogo";
 
@@ -26,7 +26,6 @@ export default function HomePage() {
             {[
               { label: "Fonctionnalités", href: "#features" },
               { label: "Tarifs", href: "/tarifs" },
-              { label: "Témoignages", href: "#temoignages" },
             ].map((item) => (
               <Link
                 key={item.label}
@@ -62,7 +61,7 @@ export default function HomePage() {
             }}
           >
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--gold)" }} />
-            FORGE Afrika — 100% OHADA conforme
+            MVP — pilote recherché
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
@@ -72,8 +71,8 @@ export default function HomePage() {
           </h1>
 
           <p className="text-xl mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: "var(--text2)" }}>
-            CompTrack remplace les cahiers et les Excel complexes. Factures, dépenses,
-            rapports OHADA — en français, pour les réalités africaines.
+            CompTrack regroupe le suivi des factures, des dépenses et des rapports
+            comptables — en français, pour les PME africaines.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -82,7 +81,7 @@ export default function HomePage() {
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all hover:brightness-110"
               style={{ background: "var(--gold)", color: "var(--navy)" }}
             >
-              Essayer gratuitement
+              Découvrir le MVP
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
@@ -112,23 +111,20 @@ export default function HomePage() {
           <div className="p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
-                { label: "Solde total", value: "4 250 000", change: "+12%", up: true },
-                { label: "Revenus juin", value: "1 395 000", change: "+21%", up: true },
-                { label: "Dépenses juin", value: "693 000", change: "+14%", up: false },
-                { label: "Bénéfice net", value: "702 000", change: "+30%", up: true },
+                { label: "Devise", value: "FCFA", detail: "Comptabilité" },
+                { label: "Factures", value: "PDF", detail: "Export" },
+                { label: "Rapports", value: "OHADA", detail: "Format" },
+                { label: "Produit", value: "MVP", detail: "Pilote recherché" },
               ].map((kpi, i) => (
                 <div key={i} className="rounded-xl p-4" style={{ background: "var(--bg3)", border: "1px solid var(--border)" }}>
                   <p className="text-xs mb-2" style={{ color: "var(--text2)" }}>{kpi.label}</p>
                   <p className="text-lg font-bold font-mono">{kpi.value}</p>
-                  <p className="text-xs font-mono mb-1" style={{ color: "var(--text2)" }}>FCFA</p>
-                  <span className="text-xs font-mono font-semibold" style={{ color: kpi.up ? "var(--green)" : "var(--red)" }}>
-                    {kpi.change}
-                  </span>
+                  <p className="text-xs font-mono mb-1" style={{ color: "var(--text2)" }}>{kpi.detail}</p>
                 </div>
               ))}
             </div>
             <div className="rounded-xl p-4 flex items-end gap-2" style={{ background: "var(--bg3)", border: "1px solid var(--border)", height: "120px" }}>
-              {[55, 62, 71, 68, 80, 100].map((h, i) => (
+              {[60, 60, 60, 60, 60, 60].map((h, i) => (
                 <div key={i} className="flex-1 rounded-t-sm" style={{ height: `${h}%`, background: i === 5 ? "var(--gold)" : "var(--cyan)", opacity: i === 5 ? 1 : 0.6 }} />
               ))}
             </div>
@@ -140,9 +136,9 @@ export default function HomePage() {
       <section className="py-16 px-6 border-t border-b" style={{ borderColor: "var(--border)" }}>
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
           {[
-            { value: "500+", label: "PME actives" },
-            { value: "+40%", label: "de temps économisé" },
-            { value: "100%", label: "OHADA conforme" },
+            { value: "FCFA", label: "Monnaie" },
+            { value: "Français", label: "Langue" },
+            { value: "MVP", label: "Pilote recherché" },
           ].map((stat, i) => (
             <div key={i}>
               <p className="text-4xl font-bold font-mono mb-2" style={{ color: "var(--gold)" }}>
@@ -158,17 +154,17 @@ export default function HomePage() {
       <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tout ce dont votre PME a besoin</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Fonctionnalités du MVP</h2>
             <p className="text-lg" style={{ color: "var(--text2)" }}>Conçu pour les réalités des entreprises africaines</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: BarChart3,  title: "Tableau de bord temps réel", desc: "Vue d'ensemble de votre santé financière avec KPIs, graphiques interactifs et alertes intelligentes.", color: "var(--gold)" },
-              { icon: FileText,   title: "Factures automatiques",       desc: "Créez des factures PDF professionnelles en 30 secondes. Suivi des paiements et relances automatiques.", color: "var(--cyan)" },
-              { icon: TrendingUp, title: "Suivi des dépenses",          desc: "Catégorisez et analysez chaque dépense. Identifiez les fuites financières et optimisez vos coûts.", color: "var(--gold)" },
-              { icon: Zap,        title: "Objectifs financiers",        desc: "Fixez des objectifs mensuels et annuels. Suivez votre progression et ajustez votre stratégie en temps réel.", color: "var(--cyan)" },
-              { icon: Shield,     title: "Rapports OHADA",              desc: "Génération automatique des états financiers conformes aux normes OHADA. Exportables en PDF et Excel.", color: "var(--gold)" },
-              { icon: Globe,      title: "Multi-devises FCFA/EUR/USD",  desc: "Gérez vos finances en FCFA, EUR, USD, XOF et plus. Conversion automatique aux taux du marché.", color: "var(--cyan)" },
+              { icon: BarChart3,  title: "Tableau de bord", desc: "Consultez les indicateurs et graphiques de suivi financier.", color: "var(--gold)" },
+              { icon: FileText,   title: "Factures", desc: "Créez des factures et suivez les paiements.", color: "var(--cyan)" },
+              { icon: TrendingUp, title: "Suivi des dépenses", desc: "Catégorisez et consultez les dépenses enregistrées.", color: "var(--gold)" },
+              { icon: Zap,        title: "Objectifs financiers", desc: "Définissez des objectifs et suivez leur progression.", color: "var(--cyan)" },
+              { icon: Shield,     title: "Rapports OHADA", desc: "Consultez et exportez les rapports au format OHADA.", color: "var(--gold)" },
+              { icon: Globe,      title: "Devises", desc: "Suivez vos montants en FCFA, EUR et USD.", color: "var(--cyan)" },
             ].map((feat, i) => (
               <div
                 key={i}
@@ -186,92 +182,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Témoignages ──────────────────────────────────────────────────── */}
-      <section id="temoignages" className="py-24 px-6" style={{ background: "var(--bg2)" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ce que disent nos clients</h2>
-            <p className="text-lg" style={{ color: "var(--text2)" }}>500+ PME africaines font confiance à CompTrack</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: "Avant CompTrack, je gérais mes 200+ transactions dans un cahier. Maintenant mes rapports OHADA sont prêts en 1 clic. C'est révolutionnaire pour mon cabinet.",
-                name: "Fatoumata Koné",
-                role: "Expert-comptable",
-                city: "Abidjan, Côte d'Ivoire",
-                initials: "FK",
-                stars: 5,
-              },
-              {
-                quote: "Grâce à CompTrack, j'ai enfin une vision claire de ma trésorerie. J'ai économisé 15 000 FCFA par mois en identifiant des dépenses inutiles. Le ROI est immédiat.",
-                name: "Moussa Traoré",
-                role: "Gérant, Traoré BTP",
-                city: "Ouagadougou, Burkina Faso",
-                initials: "MT",
-                stars: 5,
-              },
-              {
-                quote: "La fonctionnalité de facturation en FCFA est parfaite. Mes clients reçoivent des factures professionnelles et les retards de paiement ont diminué de 60%.",
-                name: "Aminata Diallo",
-                role: "Directrice, Fashion Dakar",
-                city: "Dakar, Sénégal",
-                initials: "AD",
-                stars: 5,
-              },
-            ].map((t, i) => (
-              <div key={i} className="p-6 rounded-2xl" style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.stars }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 fill-current" style={{ color: "var(--gold)" }} />
-                  ))}
-                </div>
-                <blockquote className="text-sm leading-relaxed mb-6 italic" style={{ color: "var(--text2)" }}>
-                  &ldquo;{t.quote}&rdquo;
-                </blockquote>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0" style={{ background: "var(--gold)", color: "var(--navy)" }}>
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">{t.name}</p>
-                    <p className="text-xs" style={{ color: "var(--text2)" }}>{t.role} · {t.city}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Pricing Preview ──────────────────────────────────────────────── */}
       <section id="tarifs" className="py-24 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Des tarifs adaptés à votre croissance</h2>
-          <p className="text-lg mb-12" style={{ color: "var(--text2)" }}>Commencez gratuitement, évoluez sans contrainte</p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Offres CompTrack</h2>
+          <p className="text-lg mb-12" style={{ color: "var(--text2)" }}>Tarifs affichés en FCFA par mois</p>
           <div className="grid md:grid-cols-3 gap-6">
             {[
               {
                 name: "Solo",
                 price: "0",
                 desc: "Pour démarrer",
-                features: ["1 utilisateur", "50 transactions/mois", "Tableau de bord basique", "Export PDF limité"],
+                features: ["Accès individuel", "50 transactions/mois", "Tableau de bord basique", "Export PDF limité"],
                 cta: "Commencer gratuitement",
                 highlighted: false,
               },
               {
                 name: "PME",
                 price: "15 000",
-                desc: "Le plus populaire",
-                features: ["5 utilisateurs", "Transactions illimitées", "Factures + Rapports OHADA", "Export Excel/PDF", "Support email 48h"],
-                cta: "Essayer 30 jours gratuit",
+                desc: "Offre PME",
+                features: ["Multi-utilisateurs", "Factures + Rapports OHADA", "Export Excel/PDF"],
+                cta: "Découvrir le MVP",
                 highlighted: true,
               },
               {
                 name: "Entreprise",
                 price: "45 000",
                 desc: "Multi-entités",
-                features: ["Utilisateurs illimités", "Multi-entreprises", "API accès", "Support prioritaire 4h", "Formation en ligne"],
+                features: ["Multi-utilisateurs", "Multi-entreprises", "API accès", "Support prioritaire 4h", "Formation en ligne"],
                 cta: "Contacter l'équipe",
                 highlighted: false,
               },
@@ -287,7 +225,7 @@ export default function HomePage() {
                 {plan.highlighted && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                     <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: "var(--gold)", color: "var(--navy)" }}>
-                      ⭐ Populaire
+                      Offre PME
                     </span>
                   </div>
                 )}
@@ -333,21 +271,21 @@ export default function HomePage() {
           style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(0,188,212,0.1) 100%)", border: "1px solid rgba(212,175,55,0.25)" }}
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Rejoignez 500 PME qui font confiance à CompTrack
+            Conçu pour les PME africaines
           </h2>
           <p className="mb-8 text-lg" style={{ color: "var(--text2)" }}>
-            Démarrez gratuitement. Aucune carte bancaire requise.
+            CompTrack est un MVP — pilote recherché.
           </p>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:brightness-110"
             style={{ background: "var(--gold)", color: "var(--navy)" }}
           >
-            Commencer gratuitement
+            Découvrir le MVP
             <ArrowRight className="w-5 h-5" />
           </Link>
           <p className="mt-4 text-xs" style={{ color: "var(--text3)" }}>
-            Gratuit 30 jours · Sans carte bancaire · Annulable à tout moment
+            MVP — pilote recherché
           </p>
         </div>
       </section>
@@ -361,7 +299,7 @@ export default function HomePage() {
               <span className="font-bold">CompTrack</span>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: "var(--text2)" }}>
-              La comptabilité simple pour les PME africaines. Conforme OHADA.
+              La comptabilité simple pour les PME africaines. Rapports OHADA.
             </p>
           </div>
           <div>
