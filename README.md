@@ -8,6 +8,15 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+[![Demo](https://img.shields.io/badge/Demo-Voir%20live-D4AF37?style=for-the-badge)](https://comptrack-chi.vercel.app)
+
+**[📄 PRD](./PRD.md)**
+
+## 🌍 Demo Live
+
+**Application live :** https://comptrack-chi.vercel.app
+
+> Comptabilité B2B simplifiée pour PMEs africaines — transactions, factures, rapports en FCFA
 
 ---
 

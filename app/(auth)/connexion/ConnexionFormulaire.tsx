@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { supabaseConfigure } from "@/lib/supabase/config";
+import { APRES_CONNEXION, suiteSure } from "@/lib/garde-acces";
+import BanniereNonConfigure from "../BanniereNonConfigure";
 
-export default function ConnexionPage() {
+export default function ConnexionFormulaire() {
   const router = useRouter();
+  const params = useSearchParams();
+  // La page où l'on voulait aller avant d'être renvoyé ici.
+  const suite = suiteSure(params.get("suite")) ?? APRES_CONNEXION;
+  const configure = supabaseConfigure();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +24,7 @@ export default function ConnexionPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+    if (!configure) return;
     if (!email || !password) {
       setError("Veuillez remplir tous les champs.");
       return;
@@ -30,7 +38,8 @@ export default function ConnexionPage() {
           ? "Email ou mot de passe incorrect."
           : authError.message);
       } else {
-        router.push("/dashboard");
+        router.push(suite);
+        router.refresh();
       }
     } catch {
       setError("Une erreur est survenue. Veuillez réessayer.");
@@ -49,6 +58,8 @@ export default function ConnexionPage() {
           </p>
         </div>
 
+        {!configure && <BanniereNonConfigure />}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium mb-2" htmlFor="email">Adresse email</label>
@@ -59,6 +70,7 @@ export default function ConnexionPage() {
               className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
               style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }}
               required
+              disabled={!configure}
             />
           </div>
 
@@ -74,6 +86,7 @@ export default function ConnexionPage() {
                 className="w-full px-4 py-3 pr-12 rounded-xl text-sm outline-none transition-all"
                 style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }}
                 required
+                disabled={!configure}
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
@@ -96,7 +109,7 @@ export default function ConnexionPage() {
             </div>
           )}
 
-          <button type="submit" disabled={isLoading}
+          <button type="submit" disabled={isLoading || !configure}
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: "var(--gold)", color: "var(--navy)" }}>
             {isLoading
