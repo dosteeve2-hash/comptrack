@@ -12,5 +12,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    // Sans cette ligne, vitest.setup.ts n'est jamais charge et aucun matcher
+    // jest-dom n'est enregistre : toBeInTheDocument remonte en
+    // « Invalid Chai property ». C'est ce qui cassait 59 tests.
+    setupFiles: ["./vitest.setup.ts"],
   },
 });

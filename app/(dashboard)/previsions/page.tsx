@@ -70,13 +70,19 @@ function projeter(scenarioId: string, tresoActuelle: number) {
 }
 
 // ─── Tooltip custom ─────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: any) {
+type EntreeTooltip = { name?: string; value?: number; color?: string };
+
+function CustomTooltip({ active, payload, label }: {
+  active?: boolean;
+  payload?: EntreeTooltip[];
+  label?: string | number;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="p-3 rounded-xl text-xs shadow-lg"
       style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)", minWidth: 160 }}>
       <p className="font-bold mb-2">{label}</p>
-      {payload.map((e: any, i: number) => (
+      {payload.map((e: EntreeTooltip, i: number) => (
         <p key={i} style={{ color: e.color }} className="mb-0.5">
           {e.name}: {fcfa(e.value)}
         </p>
@@ -189,7 +195,7 @@ export default function PrevisionsPage() {
           <div>
             <p className="text-sm font-bold" style={{ color: RED }}>Risque de trésorerie en {tresoNeg} mois</p>
             <p className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>
-              En scénario {scenario}, la trésorerie devient négative. Envisagez de réduire les dépenses ou d'augmenter vos revenus.
+              En scénario {scenario}, la trésorerie devient négative. Envisagez de réduire les dépenses ou d&apos;augmenter vos revenus.
             </p>
           </div>
         </motion.div>
@@ -236,7 +242,7 @@ export default function PrevisionsPage() {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="mois" tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={(v: any) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
+            <YAxis tickFormatter={(v: number) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine x="Aoû 26" stroke={ORANGE} strokeDasharray="4 2" label={{ value: "Projection →", position: "insideTopRight", fontSize: 9, fill: ORANGE }} />
             <Area type="monotone" dataKey="revenus"  name="Revenus"  stroke={GREEN} fill="url(#gRev)" strokeWidth={2} dot={false} />
@@ -252,8 +258,8 @@ export default function PrevisionsPage() {
           <BarChart data={benefData} barCategoryGap="30%" margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="mois" tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={(v: any) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
-            <Tooltip formatter={(v: any) => [fcfa(v), "Bénéfice net"]} />
+            <YAxis tickFormatter={(v: number) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
+            <Tooltip formatter={(v: number) => [fcfa(v), "Bénéfice net"]} />
             <ReferenceLine y={0} stroke="var(--border2)" />
             <Bar dataKey="net" name="Bénéfice net" radius={[4, 4, 0, 0]}>
               {benefData.map((d, i) => (
