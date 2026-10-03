@@ -84,7 +84,7 @@ function CustomTooltip({ active, payload, label }: {
       <p className="font-bold mb-2">{label}</p>
       {payload.map((e: EntreeTooltip, i: number) => (
         <p key={i} style={{ color: e.color }} className="mb-0.5">
-          {e.name}: {fcfa(e.value)}
+          {e.name}: {typeof e.value === "number" ? fcfa(e.value) : "—"}
         </p>
       ))}
     </div>
