@@ -42,7 +42,7 @@ export function HeroSection() {
           <div ref={badgeRef} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono mb-8"
             style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: 'var(--gold)' }}>
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--gold)' }} />
-            FORGE Afrika — 100% OHADA conforme
+            MVP — pilote recherché
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
@@ -60,13 +60,13 @@ export function HeroSection() {
           </h1>
 
           <p ref={subRef} className="text-xl mb-10 leading-relaxed" style={{ color: 'var(--text2)' }}>
-            CompTrack remplace les cahiers et les Excel complexes. Factures, dépenses,
-            rapports OHADA — en français, pour les réalités africaines.
+            CompTrack regroupe le suivi des factures, des dépenses et des rapports
+            comptables — en français, pour les PME africaines.
           </p>
 
           <div ref={ctaRef} className="flex flex-col sm:flex-row gap-4">
             <GlowButton href="/inscription" size="lg">
-              Essayer gratuitement <ArrowRight className="w-4 h-4" />
+              Découvrir le MVP <ArrowRight className="w-4 h-4" />
             </GlowButton>
             <GlowButton href="#demo" variant="outline" size="lg">
               <Play className="w-4 h-4 fill-current" /> Voir la démo
@@ -80,7 +80,7 @@ export function HeroSection() {
           <div className="relative rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border2)' }}>
             <Image
               src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=800&q=80"
-              alt="Entrepreneur africain utilisant CompTrack"
+              alt="Entrepreneurs en réunion"
               width={800} height={480}
               className="w-full object-cover"
               style={{ maxHeight: '320px' }}
@@ -92,9 +92,9 @@ export function HeroSection() {
           {/* KPI overlay */}
           <div className="absolute bottom-4 left-4 right-4 grid grid-cols-3 gap-2">
             {[
-              { label: 'Solde', value: '4,25M FCFA', up: true },
-              { label: 'Revenus', value: '+21%', up: true },
-              { label: 'Bénéfice', value: '702K', up: true },
+              { label: 'Devise', value: 'FCFA' },
+              { label: 'Factures', value: 'PDF' },
+              { label: 'Produit', value: 'MVP' },
             ].map((k) => (
               <div key={k.label} className="rounded-xl p-3 text-center"
                 style={{ background: 'rgba(10,22,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid var(--border2)' }}>
@@ -107,7 +107,7 @@ export function HeroSection() {
           {/* Floating badge */}
           <div ref={badgeFloat} className="floating-badge absolute -left-6 top-8 px-4 py-2.5 rounded-xl text-sm font-semibold hidden lg:block">
             <span style={{ color: 'var(--green)' }}>● </span>
-            <span style={{ color: 'var(--text)' }}>500+ PME actives</span>
+            <span style={{ color: 'var(--text)' }}>Pilote recherché</span>
           </div>
         </div>
       </div>

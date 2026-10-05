@@ -6,7 +6,6 @@ import { GlowButton } from '../ui/GlowButton'
 const NAV_LINKS = [
   { label: 'Fonctionnalités', href: '#features' },
   { label: 'Tarifs',          href: '/tarifs' },
-  { label: 'Témoignages',     href: '#temoignages' },
 ]
 
 export function Navbar() {
@@ -57,7 +56,7 @@ export function Navbar() {
             Connexion
           </Link>
           <GlowButton href="/inscription" size="sm">
-            Essayer gratuitement
+            Découvrir le MVP
           </GlowButton>
         </div>
       </div>

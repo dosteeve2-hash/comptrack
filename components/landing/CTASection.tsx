@@ -17,16 +17,16 @@ export function CTASection() {
             }}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Rejoignez 500 PME qui font confiance à CompTrack
+              Conçu pour les PME africaines
             </h2>
             <p className="mb-8 text-lg" style={{ color: 'var(--text2)' }}>
-              Démarrez gratuitement. Aucune carte bancaire requise.
+              CompTrack est un MVP — pilote recherché.
             </p>
             <GlowButton href="/inscription" size="lg">
-              Commencer gratuitement <ArrowRight className="w-5 h-5" />
+              Découvrir le MVP <ArrowRight className="w-5 h-5" />
             </GlowButton>
             <p className="mt-4 text-xs" style={{ color: 'var(--text3)' }}>
-              Gratuit 30 jours · Sans carte bancaire · Annulable à tout moment
+              MVP — pilote recherché
             </p>
           </div>
         </ScrollReveal>
