@@ -1,7 +1,7 @@
 // app/(dashboard)/notifications/NotificationItem.tsx
 import { motion } from 'framer-motion'
 import { CheckCircle } from 'lucide-react'
-import type { Notification } from './page'
+import type { Notification } from '@/lib/data'
 import { TYPE_CONFIG, CATEGORIE_LABELS, tempsRelatif } from './notifications.helpers'
 
 export function NotificationItem({
@@ -45,7 +45,7 @@ export function NotificationItem({
             {!notif.lue && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#D4AF37' }} />}
           </div>
           <span className="text-xs flex-shrink-0 font-mono" style={{ color: 'var(--text3)' }}>
-            {tempsRelatif(notif.created_at)}
+            {tempsRelatif(notif.createdAt)}
           </span>
         </div>
 
