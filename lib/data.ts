@@ -97,3 +97,13 @@ export const categories: Categorie[] = [
   { id: "c11", nom: "Marketing", type: "depense", couleur: "#ec4899" },
   { id: "c12", nom: "Maintenance", type: "depense", couleur: "#84cc16" },
 ];
+
+// ─── Données vides par défaut ────────────────────────────────────────────────
+// Les écrans de rapports lisent ces constantes : tant qu'aucune donnée réelle
+// n'est branchée, ils affichent un état vide plutôt que des chiffres inventés.
+
+export const donneesMensuelles: DonneesMensuelles[] = [];
+export const topCategoriesDepenses: { nom: string; montant: number; couleur: string }[] = [];
+export const clients: Client[] = [];
+export const factures: Facture[] = [];
+export const kpisMoisActuel = { solde: 0 };
