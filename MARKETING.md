@@ -56,13 +56,9 @@ au Sénégal — même avec une connexion 3G instable.
 
 ---
 
-## Résultats Concrets de Nos Utilisateurs
+## Pilotes recherchés
 
-> *"Avant CompTrack, je passais 2 jours par mois sur ma comptabilité. Maintenant, 20 minutes."*
-> — Aminata K., gérante d'une boutique textile à Ouagadougou
-
-> *"Mon banquier a dit que mes états financiers étaient parmi les mieux préparés qu'il avait vus."*
-> — Ibrahim D., prestataire de services IT à Abidjan
+Aucun témoignage pour l'instant : le produit est en phase pilote et nous cherchons nos premiers utilisateurs. Contactez-nous pour l'essayer et nous dire ce qui manque.
 
 ---
 

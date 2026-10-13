@@ -13,6 +13,7 @@ import {
 import NotificationBell from "@/components/NotificationBell";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import CompTrackLogo from "@/components/CompTrackLogo";
+import ExampleDataBanner from "@/components/ExampleDataBanner";
 import { useFactures, useNotifications } from "@/lib/store";
 
 interface NavItem {
@@ -251,7 +252,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">
+          <ExampleDataBanner />
+          {children}
+        </main>
 
         {/* Barre de navigation en bas — mobile, type application */}
         <nav
