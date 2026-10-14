@@ -29,7 +29,7 @@ export function FactureDetail({
               style={{ background: 'var(--green)', color: '#000' }}>
               <Download className="w-3.5 h-3.5" /> PDF
             </button>
-            <button onClick={onClose} aria-label="Fermer" className="p-1.5 rounded-lg hover:opacity-70" style={{ color: 'var(--text2)' }}>
+            <button onClick={onClose} aria-label="Fermer" className="p-1.5 min-w-10 min-h-9 inline-flex items-center justify-center rounded-lg hover:opacity-70" style={{ color: 'var(--text2)' }}>
               <X className="w-5 h-5" />
             </button>
           </div>

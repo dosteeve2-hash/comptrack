@@ -210,7 +210,7 @@ function ModalDeclaration({ decl, onClose }: { decl: Declaration; onClose: () =>
             <h3 className="font-bold text-lg">{decl.titre}</h3>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>{decl.periodicite} · {decl.periode}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:opacity-70"
+          <button onClick={onClose} className="p-2 min-w-10 min-h-9 inline-flex items-center justify-center rounded-xl hover:opacity-70"
             style={{ color: 'var(--text2)' }}>
             <X className="w-5 h-5" />
           </button>

@@ -25,7 +25,7 @@ export function FooterSection() {
           <p className="text-sm font-semibold mb-3" style={{ color: 'var(--gold)' }}>Produit</p>
           {PRODUCT_LINKS.map((item) => (
             <p key={item} className="text-sm mb-2">
-              <Link href="#" className="hover:opacity-80 transition-opacity" style={{ color: 'var(--text2)' }}>{item}</Link>
+              <Link href="#" className="min-h-9 min-w-10 inline-flex items-center hover:opacity-80 transition-opacity" style={{ color: 'var(--text2)' }}>{item}</Link>
             </p>
           ))}
         </div>
@@ -35,7 +35,7 @@ export function FooterSection() {
           <p className="text-sm font-semibold mb-3" style={{ color: 'var(--gold)' }}>Légal</p>
           {LEGAL_LINKS.map((item) => (
             <p key={item} className="text-sm mb-2">
-              <Link href="#" className="hover:opacity-80 transition-opacity" style={{ color: 'var(--text2)' }}>{item}</Link>
+              <Link href="#" className="min-h-9 min-w-10 inline-flex items-center hover:opacity-80 transition-opacity" style={{ color: 'var(--text2)' }}>{item}</Link>
             </p>
           ))}
         </div>

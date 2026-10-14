@@ -130,7 +130,7 @@ export default function NotificationBell() {
       {/* ── Bouton cloche ─────────────────────────────────────────────────────── */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative p-2 rounded-xl transition-all hover:opacity-80"
+        className="relative p-2 min-w-10 min-h-9 inline-flex items-center justify-center rounded-xl transition-all hover:opacity-80"
         style={{ color: "var(--text2)", border: "1px solid var(--border)" }}
         aria-label={nonLues > 0 ? `${nonLues} notification(s) non lue(s)` : "Notifications"}
       >
@@ -177,7 +177,7 @@ export default function NotificationBell() {
                 {nonLues > 0 && (
                   <button
                     onClick={toutLire}
-                    className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg transition-all hover:opacity-70"
+                    className="flex items-center gap-1 min-h-9 text-[11px] px-2 py-1 rounded-lg transition-all hover:opacity-70"
                     style={{ color: "var(--gold)" }}
                     title="Tout marquer comme lu"
                   >
@@ -187,7 +187,7 @@ export default function NotificationBell() {
                 )}
                 <button
                   onClick={() => setOpen(false)}
-                  className="p-1 rounded-lg transition-all hover:opacity-70"
+                  className="p-1 min-w-10 min-h-9 inline-flex items-center justify-center rounded-lg transition-all hover:opacity-70"
                   style={{ color: "var(--text3)" }}
                 >
                   <X className="w-3.5 h-3.5" />
@@ -260,7 +260,7 @@ export default function NotificationBell() {
                         {!notif.lue && (
                           <button
                             onClick={() => marquerLue(notif.id)}
-                            className="text-[10px] font-medium transition-all hover:opacity-70"
+                            className="min-w-10 min-h-9 inline-flex items-center justify-center px-2 text-[10px] font-medium transition-all hover:opacity-70"
                             style={{ color: "var(--gold)" }}
                           >
                             Marquer lue
@@ -280,7 +280,7 @@ export default function NotificationBell() {
             >
               <a
                 href="/notifications"
-                className="text-xs font-medium transition-all hover:opacity-70"
+                className="min-w-10 min-h-9 inline-flex items-center justify-center px-2 text-xs font-medium transition-all hover:opacity-70"
                 style={{ color: "var(--gold)" }}
                 onClick={() => setOpen(false)}
               >

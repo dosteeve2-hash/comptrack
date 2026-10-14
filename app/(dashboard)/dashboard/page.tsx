@@ -899,7 +899,7 @@ export default function DashboardPage() {
               <Trophy className="w-4 h-4" style={{ color: "var(--gold)" }} />
               Meilleurs clients
             </h3>
-            <Link href="/clients" className="text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--green)" }}>
+            <Link href="/clients" className="min-w-10 min-h-9 inline-flex items-center justify-center text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--green)" }}>
               Voir tout →
             </Link>
           </div>
@@ -937,7 +937,7 @@ export default function DashboardPage() {
               <ShoppingBag className="w-4 h-4" style={{ color: "var(--cyan)" }} />
               Produits les plus vendus
             </h3>
-            <Link href="/catalogue" className="text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--green)" }}>
+            <Link href="/catalogue" className="min-w-10 min-h-9 inline-flex items-center justify-center text-xs font-medium transition-opacity hover:opacity-70" style={{ color: "var(--green)" }}>
               Voir tout →
             </Link>
           </div>
