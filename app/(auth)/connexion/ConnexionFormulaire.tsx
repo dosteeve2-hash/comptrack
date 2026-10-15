@@ -83,14 +83,14 @@ export default function ConnexionFormulaire() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 pr-12 rounded-xl text-sm outline-none transition-all"
+                className="w-full px-4 py-3 pr-14 rounded-xl text-sm outline-none transition-all"
                 style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }}
                 required
                 disabled={!configure}
               />
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded transition-opacity hover:opacity-70"
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 min-w-10 min-h-9 inline-flex items-center justify-center rounded transition-opacity hover:opacity-70"
                 style={{ color: "var(--text2)" }}>
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -98,7 +98,7 @@ export default function ConnexionFormulaire() {
           </div>
 
           <div className="flex justify-end">
-            <a href="#" className="text-sm transition-opacity hover:opacity-80" style={{ color: "var(--gold)" }}>
+            <a href="#" className="min-h-9 min-w-10 inline-flex items-center justify-center text-sm transition-opacity hover:opacity-80" style={{ color: "var(--gold)" }}>
               Mot de passe oublié ?
             </a>
           </div>

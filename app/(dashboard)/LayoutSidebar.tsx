@@ -72,7 +72,7 @@ export function LayoutSidebar({ pathname, prefs, onClose, onSignOut }: SidebarPr
             Passez à PME pour rapports OHADA et transactions illimitées.
           </p>
           <Link href="/tarifs"
-            className="block w-full py-1.5 rounded-lg text-xs font-semibold text-center transition-all hover:brightness-110"
+            className="flex items-center justify-center min-h-9 w-full py-1.5 rounded-lg text-xs font-semibold text-center transition-all hover:brightness-110"
             style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
             Voir les plans
           </Link>
@@ -90,7 +90,7 @@ export function LayoutSidebar({ pathname, prefs, onClose, onSignOut }: SidebarPr
           <p className="text-xs truncate" style={{ color: 'var(--text3)' }}>{prefs.country} · {prefs.currency}</p>
         </div>
         <button onClick={onSignOut}
-          className="p-1.5 rounded-lg transition-all hover:opacity-70"
+          className="p-1.5 min-w-10 min-h-9 inline-flex items-center justify-center rounded-lg transition-all hover:opacity-70"
           style={{ color: 'var(--text2)' }}
           title="Déconnexion"
           aria-label="Déconnexion">

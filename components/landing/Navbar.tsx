@@ -41,7 +41,7 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map((item) => (
             <Link key={item.label} href={item.href}
-              className="text-sm hover:opacity-100 transition-opacity"
+              className="min-h-9 inline-flex items-center px-2 text-sm hover:opacity-100 transition-opacity"
               style={{ color: 'var(--text2)' }}>
               {item.label}
             </Link>

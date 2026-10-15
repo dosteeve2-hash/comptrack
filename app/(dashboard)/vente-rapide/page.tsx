@@ -332,7 +332,7 @@ export default function VenteRapidePage() {
               {catalogue.length === 0 ? (
                 <div className="text-center py-10" style={{ color: "var(--text2)" }}>
                   <p className="text-sm font-medium mb-1">Votre catalogue est vide</p>
-                  <Link href="/catalogue" className="text-xs font-medium" style={{ color: "var(--green)" }}>
+                  <Link href="/catalogue" className="min-w-10 min-h-9 inline-flex items-center justify-center text-xs font-medium" style={{ color: "var(--green)" }}>
                     Ajouter des produits →
                   </Link>
                 </div>
