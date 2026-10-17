@@ -53,13 +53,11 @@ export function decisionAcces(contexte: {
 }): Decision {
   const { chemin, connecte, configure } = contexte
 
-  // Supabase absent : personne ne peut se connecter. On ferme quand même le tableau de
-  // bord — un garde qui s'ouvre dès qu'il ne sait pas n'est pas un garde — mais on le
-  // dit, pour que la page de connexion explique la situation au lieu de la subir.
-  if (!configure) {
-    if (estPublic(chemin)) return { action: 'laisser' }
-    return { action: 'rediriger', vers: '/connexion?raison=non-configure' }
-  }
+  // Supabase absent : personne ne peut se connecter, donc il n'y a aucun compte à protéger.
+  // Le tableau de bord s'ouvre en mode démo : les données restent dans le navigateur de
+  // la personne (localStorage), jamais sur un serveur, et l'interface le dit. Dès que
+  // Supabase est configuré, cette branche disparaît et tout le reste est fermé.
+  if (!configure) return { action: 'laisser' }
 
   if (connecte) {
     if (estPageAuth(chemin)) return { action: 'rediriger', vers: APRES_CONNEXION }

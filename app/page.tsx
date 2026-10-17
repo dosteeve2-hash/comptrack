@@ -20,7 +20,7 @@ export default function HomePage() {
         }}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
+          <Link href="/" className="inline-flex items-center min-h-10 hover:opacity-80 transition-opacity">
             <CompTrackLogo size="sm" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
@@ -31,7 +31,7 @@ export default function HomePage() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-sm hover:opacity-80 transition-opacity"
+                className="inline-flex items-center min-h-9 text-sm hover:opacity-80 transition-opacity"
                 style={{ color: "var(--text2)" }}
               >
                 {item.label}
@@ -78,7 +78,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/dashboard"
+              href="#features"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all hover:brightness-110"
               style={{ background: "var(--gold)", color: "var(--navy)" }}
             >
@@ -86,7 +86,7 @@ export default function HomePage() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="#demo"
+              href="/dashboard"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-medium transition-all hover:opacity-80"
               style={{ border: "1px solid var(--border2)", color: "var(--text)" }}
             >
@@ -274,7 +274,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-8">
-            <Link href="/tarifs" className="text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: "var(--cyan)" }}>
+            <Link href="/tarifs" className="inline-flex items-center min-h-9 text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: "var(--cyan)" }}>
               Voir les tarifs détaillés avec FAQ →
             </Link>
           </div>
@@ -323,7 +323,7 @@ export default function HomePage() {
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--gold)" }}>Produit</p>
             {["Fonctionnalités", "Tarifs", "Sécurité", "Mises à jour"].map((item) => (
               <p key={item} className="text-sm mb-2" style={{ color: "var(--text2)" }}>
-                <Link href="#" className="hover:opacity-80 transition-opacity">{item}</Link>
+                <Link href="#" className="inline-flex items-center min-h-9 min-w-10 hover:opacity-80 transition-opacity">{item}</Link>
               </p>
             ))}
           </div>
@@ -331,7 +331,7 @@ export default function HomePage() {
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--gold)" }}>Légal</p>
             {["Conditions d'utilisation", "Politique de confidentialité", "Mentions légales", "RGPD"].map((item) => (
               <p key={item} className="text-sm mb-2" style={{ color: "var(--text2)" }}>
-                <Link href="#" className="hover:opacity-80 transition-opacity">{item}</Link>
+                <Link href="#" className="inline-flex items-center min-h-9 min-w-10 hover:opacity-80 transition-opacity">{item}</Link>
               </p>
             ))}
           </div>

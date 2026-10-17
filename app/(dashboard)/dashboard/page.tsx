@@ -109,30 +109,6 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-// ─── Données mock — PME africaine 12 mois (XOF) ──────────────────────────────
-const MOCK_12_MOIS = [
-  { mois: 'Aoû', revenus: 2_850_000, depenses: 1_420_000, benefice: 1_430_000 },
-  { mois: 'Sep', revenus: 3_120_000, depenses: 1_680_000, benefice: 1_440_000 },
-  { mois: 'Oct', revenus: 2_960_000, depenses: 1_540_000, benefice: 1_420_000 },
-  { mois: 'Nov', revenus: 3_480_000, depenses: 1_920_000, benefice: 1_560_000 },
-  { mois: 'Déc', revenus: 4_250_000, depenses: 2_100_000, benefice: 2_150_000 },
-  { mois: 'Jan', revenus: 2_680_000, depenses: 1_380_000, benefice: 1_300_000 },
-  { mois: 'Fév', revenus: 2_940_000, depenses: 1_560_000, benefice: 1_380_000 },
-  { mois: 'Mar', revenus: 3_200_000, depenses: 1_640_000, benefice: 1_560_000 },
-  { mois: 'Avr', revenus: 3_560_000, depenses: 1_780_000, benefice: 1_780_000 },
-  { mois: 'Mai', revenus: 3_890_000, depenses: 1_950_000, benefice: 1_940_000 },
-  { mois: 'Jun', revenus: 4_100_000, depenses: 2_050_000, benefice: 2_050_000 },
-  { mois: 'Jul', revenus: 3_750_000, depenses: 1_820_000, benefice: 1_930_000 },
-]
-
-const MOCK_TOP_DEP = [
-  { nom: 'Matières 1ères', montant: 820_000, couleur: '#ef4444' },
-  { nom: 'Transport',      montant: 340_000, couleur: '#f59e0b' },
-  { nom: 'Salaires',       montant: 280_000, couleur: '#8b5cf6' },
-  { nom: 'Loyer & charges',montant: 185_000, couleur: '#3b82f6' },
-  { nom: 'Marketing',      montant: 125_000, couleur: '#ec4899' },
-]
-
 export default function DashboardPage() {
   const [txList] = useTransactions();
   const [facturesList] = useFactures();
@@ -187,7 +163,7 @@ export default function DashboardPage() {
                   key={t}
                   type="button"
                   onClick={() => setEntrepriseConfig(p => ({ ...p, type: t }))}
-                  className="px-3 py-1.5 rounded-lg text-sm transition-all"
+                  className="px-3 py-2 min-h-9 rounded-lg text-sm transition-all"
                   style={{
                     background: entrepriseConfig.type === t ? "rgba(34,197,94,0.15)" : "var(--bg3)",
                     border: `1px solid ${entrepriseConfig.type === t ? "var(--green)" : "var(--border2)"}`,
@@ -348,15 +324,15 @@ export default function DashboardPage() {
 
   // ── Analytics avancés ──────────────────────────────────────────────────────
   const caMonth = kpisMoisActuel.revenusMois
-  const tauxBenefice = caMonth > 0 ? Math.round((kpisMoisActuel.beneficeNet / caMonth) * 100) : 49
+  const tauxBenefice = caMonth > 0 ? Math.round((kpisMoisActuel.beneficeNet / caMonth) * 100) : null
   const facturesEnAttente = facturesList.filter(f => ['en_attente', 'envoyee'].includes(f.statut))
   const montantEnAttente = facturesEnAttente.reduce((s, f) => s + f.montant, 0)
-  const depensesCritiques = kpisMoisActuel.depensesMois || MOCK_TOP_DEP.reduce((s, c) => s + c.montant, 0)
-  const chartData12 = donneesMensuelles.length >= 3 ? computeDonneesMensuelles(txList, 12) : MOCK_12_MOIS
-  const barData = topCategoriesDepenses.length >= 2 ? topCategoriesDepenses : MOCK_TOP_DEP
+  const depensesCritiques = kpisMoisActuel.depensesMois
+  const chartData12 = computeDonneesMensuelles(txList, 12)
+  const barData = topCategoriesDepenses
   const pieRevDep = (() => {
-    const rev = kpisMoisActuel.revenusMois || MOCK_12_MOIS[11].revenus
-    const dep = kpisMoisActuel.depensesMois || MOCK_12_MOIS[11].depenses
+    const rev = kpisMoisActuel.revenusMois
+    const dep = kpisMoisActuel.depensesMois
     const ben = Math.max(0, rev - dep)
     return [
       { name: 'Recettes', value: rev, color: '#22d98a' },
@@ -390,7 +366,8 @@ export default function DashboardPage() {
                 </div>
                 <button
                   onClick={() => setOnboardingOpen(false)}
-                  className="p-1.5 rounded-lg hover:opacity-70"
+                  aria-label="Fermer"
+                  className="p-1.5 min-w-10 min-h-9 inline-flex items-center justify-center rounded-lg hover:opacity-70"
                   style={{ color: "var(--text2)" }}
                 >
                   <X className="w-4 h-4" />
@@ -470,14 +447,14 @@ export default function DashboardPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Tableau de bord</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
             {entrepriseNom} — {moisActuelLabel}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/vente-rapide"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
@@ -681,23 +658,23 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Graphique Revenus/Dépenses 6 mois ────────────────────────────── */}
-      <RevenuesChart />
+      <RevenuesChart data={computeDonneesMensuelles(txList, 6)} />
 
       {/* ── Analytics KPI cards ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
             label: 'CA du mois',
-            value: formatMontant(caMonth || MOCK_12_MOIS[11].revenus),
+            value: formatMontant(caMonth),
             sub: 'Chiffre d\'affaires',
             color: 'var(--gold)',
             icon: '💰',
           },
           {
             label: 'Taux bénéfice',
-            value: `${tauxBenefice} %`,
+            value: tauxBenefice === null ? '—' : `${tauxBenefice} %`,
             sub: 'Marge nette',
-            color: tauxBenefice >= 30 ? 'var(--green)' : tauxBenefice >= 10 ? 'var(--amber)' : 'var(--red)',
+            color: tauxBenefice === null ? 'var(--text2)' : tauxBenefice >= 30 ? 'var(--green)' : tauxBenefice >= 10 ? 'var(--amber)' : 'var(--red)',
             icon: '📈',
           },
           {
@@ -744,6 +721,10 @@ export default function DashboardPage() {
           </div>
           {!mounted ? (
             <div className="h-52 rounded-xl animate-pulse" style={{ background: 'var(--bg3)' }} />
+          ) : barData.length === 0 ? (
+            <div className="h-52 rounded-xl flex items-center justify-center text-sm text-center px-4" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>
+              Pas encore de dépenses ce mois-ci
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={barData} layout="vertical" margin={{ top: 0, right: 50, left: 0, bottom: 0 }}>
@@ -791,6 +772,10 @@ export default function DashboardPage() {
           </div>
           {!mounted ? (
             <div className="h-40 rounded-xl animate-pulse" style={{ background: 'var(--bg3)' }} />
+          ) : kpisMoisActuel.revenusMois === 0 && kpisMoisActuel.depensesMois === 0 ? (
+            <div className="h-40 rounded-xl flex items-center justify-center text-sm text-center px-4" style={{ background: 'var(--bg3)', color: 'var(--text2)' }}>
+              Pas encore de mouvements ce mois-ci
+            </div>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={150}>
@@ -845,7 +830,7 @@ export default function DashboardPage() {
           <h3 className="font-semibold">Transactions récentes</h3>
           <Link
             href="/transactions"
-            className="text-xs font-medium transition-opacity hover:opacity-70"
+            className="min-w-10 min-h-9 inline-flex items-center justify-center text-xs font-medium transition-opacity hover:opacity-70"
             style={{ color: "var(--green)" }}
           >
             Voir tout →
@@ -854,7 +839,15 @@ export default function DashboardPage() {
         {recentTransactions.length === 0 ? (
           <div className="text-center py-12" style={{ color: "var(--text2)" }}>
             <p className="text-sm font-medium mb-1">Aucune transaction pour le moment</p>
-            <p className="text-xs">Ajoutez votre première transaction pour commencer.</p>
+            <p className="text-xs mb-4">Ajoutez votre première transaction pour commencer.</p>
+            <Link
+              href="/transactions"
+              className="inline-flex items-center justify-center gap-2 min-h-10 px-5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+              style={{ background: "var(--green)", color: "#000" }}
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter une première transaction
+            </Link>
           </div>
         ) : (
         <div className="divide-y" style={{ borderColor: "var(--border)" }}>
