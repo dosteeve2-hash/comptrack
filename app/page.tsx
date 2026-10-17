@@ -4,6 +4,7 @@ import {
   ArrowRight, CheckCircle2, Globe, DollarSign,
 } from "lucide-react";
 import CompTrackLogo from "@/components/CompTrackLogo";
+import ProjectVideo from "@/components/ProjectVideo";
 
 export default function HomePage() {
   return (
@@ -91,6 +92,22 @@ export default function HomePage() {
             >
               Voir la démo
             </Link>
+          </div>
+        </div>
+
+        {/* Vidéo d'accueil */}
+        <div className="max-w-3xl mx-auto mt-14 px-0">
+          <h2 className="text-2xl md:text-3xl font-bold mb-5 text-center">CompTrack en 1 minute</h2>
+          <ProjectVideo slug="comptrack" lang="fr" title="Vidéo de présentation de CompTrack" />
+          <div className="mt-6 text-center">
+            <a
+              href="mailto:docompaore2@gmail.com?subject=Utilisateur%20pilote%20CompTrack"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all hover:brightness-110"
+              style={{ background: "var(--gold)", color: "var(--navy)" }}
+            >
+              Devenir utilisateur pilote
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </div>
 
