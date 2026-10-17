@@ -11,16 +11,10 @@ import {
   ResponsiveContainer,
 } from "recharts"
 
-const data = [
-  { mois: "Avr", revenus: 1200000, depenses: 850000 },
-  { mois: "Mai", revenus: 980000, depenses: 720000 },
-  { mois: "Jun", revenus: 1450000, depenses: 1100000 },
-  { mois: "Jul", revenus: 1100000, depenses: 890000 },
-  { mois: "Aoû", revenus: 1320000, depenses: 960000 },
-  { mois: "Sep", revenus: 1580000, depenses: 1150000 },
-]
+import type { DonneesMensuelles } from "@/lib/data"
 
-export function RevenuesChart() {
+export function RevenuesChart({ data }: { data: DonneesMensuelles[] }) {
+  if (data.length === 0) return null
   return (
     <div className="rounded-xl border p-6" style={{ background: "#111827", borderColor: "var(--border)" }}>
       <h2 className="text-lg font-semibold text-white mb-4">

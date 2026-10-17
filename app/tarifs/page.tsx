@@ -275,7 +275,7 @@ export default function TarifsPage() {
       {/* Footer simple */}
       <footer className="border-t py-6 px-6 text-center" style={{ borderColor: "var(--border)" }}>
         <p className="text-xs" style={{ color: "var(--text3)" }}>
-          © 2026 CompTrack — <Link href="/" className="hover:opacity-80">Retour à l&apos;accueil</Link>
+          © 2026 CompTrack — <Link href="/" className="inline-flex items-center min-h-9 hover:opacity-80">Retour à l&apos;accueil</Link>
         </p>
       </footer>
     </div>

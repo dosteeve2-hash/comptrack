@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3, Users, FileText,
-  Settings, TrendingUp, TrendingDown, Menu, X, Bell,
+  Settings, TrendingUp, TrendingDown, Menu, Bell,
   GraduationCap, Target, ShoppingCart, Truck, Zap, Package, Wallet,
   Gauge,
 } from "lucide-react";
@@ -14,6 +14,7 @@ import NotificationBell from "@/components/NotificationBell";
 import { getPrefs, applyPrefs, type UserPrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import CompTrackLogo from "@/components/CompTrackLogo";
 import { useFactures, useNotifications } from "@/lib/store";
+import { supabaseConfigure } from "@/lib/supabase/config";
 
 interface NavItem {
   href: string;
@@ -177,9 +178,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <Link
           href="/parametres"
-          className="p-1.5 rounded-lg transition-all hover:opacity-70"
+          className="p-1.5 min-w-10 min-h-10 inline-flex items-center justify-center rounded-lg transition-all hover:opacity-70"
           style={{ color: "var(--text2)" }}
           title="Paramètres"
+          aria-label="Paramètres"
         >
           <Settings className="w-4 h-4" />
         </Link>
@@ -226,7 +228,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
         >
           <button
-            className="md:hidden p-1.5 rounded-lg transition-all hover:opacity-70"
+            aria-label="Ouvrir le menu"
+            className="md:hidden p-1.5 min-w-10 min-h-10 inline-flex items-center justify-center rounded-lg transition-all hover:opacity-70"
             style={{ color: "var(--text2)" }}
             onClick={() => setSidebarOpen(true)}
           >
@@ -240,15 +243,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <NotificationBell />
 
-            <button
-              className="md:hidden p-1.5 rounded-lg"
-              style={{ color: "var(--text2)" }}
-              onClick={() => setSidebarOpen(false)}
-            >
-              {sidebarOpen && <X className="w-5 h-5" />}
-            </button>
           </div>
         </header>
+
+        {!supabaseConfigure() && (
+          <div
+            role="status"
+            className="px-6 py-2 text-xs flex-shrink-0 border-b"
+            style={{ background: "rgba(245,158,11,0.10)", borderColor: "rgba(245,158,11,0.25)", color: "var(--text)" }}
+          >
+            <strong>Mode démo :</strong> vos données restent sur cet appareil.
+          </div>
+        )}
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-6 pb-24 md:pb-6">{children}</main>

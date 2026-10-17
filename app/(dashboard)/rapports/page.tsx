@@ -152,16 +152,7 @@ export default function RapportsPage() {
   const beneficeNet = totalRevenus - totalDepenses;
   const margeNette = totalRevenus > 0 ? Math.round((beneficeNet / totalRevenus) * 100) : 0;
 
-  // Données fictives de démo quand aucune transaction n'existe
-  const DONNEES_DEMO = [
-    { mois: "Mar", revenus: 850000, depenses: 320000, benefice: 530000 },
-    { mois: "Avr", revenus: 920000, depenses: 410000, benefice: 510000 },
-    { mois: "Mai", revenus: 1100000, depenses: 380000, benefice: 720000 },
-    { mois: "Jun", revenus: 980000, depenses: 450000, benefice: 530000 },
-    { mois: "Jul", revenus: 1250000, depenses: 520000, benefice: 730000 },
-    { mois: "Aoû", revenus: 1180000, depenses: 490000, benefice: 690000 },
-  ];
-  const donneesEffectives = donneesMensuelles.length > 0 ? donneesMensuelles : DONNEES_DEMO;
+  const donneesEffectives = donneesMensuelles;
 
   // Export PDF jsPDF A4 — header Navy/Gold + données mensuelles
   const handleExportPDF = useCallback(async () => {

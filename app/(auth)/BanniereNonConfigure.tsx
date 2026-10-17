@@ -20,7 +20,7 @@ export default function BanniereNonConfigure() {
       <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "var(--gold)" }} />
       <span>
         <strong>Ce déploiement n&apos;a pas de Supabase configuré.</strong> Aucune connexion
-        n&apos;est possible ici, et le tableau de bord reste fermé. Il manque{" "}
+        n&apos;est possible ici ; le mode démo reste ouvert. Il manque{" "}
         <code>NEXT_PUBLIC_SUPABASE_URL</code> et <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.
       </span>
     </div>

@@ -6,67 +6,6 @@ import {
   Bell, CheckCircle, AlertTriangle, XCircle, Info, CheckCheck, X,
 } from "lucide-react";
 import { useNotifications } from "@/lib/store";
-import type { Notification } from "@/lib/data";
-
-// ─── 5 notifications mock réalistes PME africaine ────────────────────────────
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "notif_001",
-    titre: "Facture FAC-2024-045 en retard",
-    message:
-      "Cette facture est en retard de 12 jours. Client : Société Tan Naaba SARL. Montant : 850 000 FCFA.",
-    type: "erreur",
-    categorie: "facture",
-    lue: false,
-    lien: "/factures",
-    createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "notif_002",
-    titre: "Budget Marketing à 94%",
-    message:
-      "Votre enveloppe Marketing est consommée à 94%. Restant : 24 000 FCFA sur 400 000 FCFA alloués.",
-    type: "alerte",
-    categorie: "depense",
-    lue: false,
-    lien: "/budget",
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "notif_003",
-    titre: "Objectif CA atteint à 87%",
-    message:
-      "Votre objectif mensuel est atteint à 87%. Il reste 130 000 FCFA pour atteindre la cible.",
-    type: "info",
-    categorie: "objectif",
-    lue: false,
-    lien: "/objectifs",
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "notif_004",
-    titre: "Nouveau client enregistré",
-    message:
-      "Société Zabrê Commerce a été ajoutée à votre base client. Premier contact : Ouagadougou.",
-    type: "succes",
-    categorie: "client",
-    lue: true,
-    lien: "/clients",
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "notif_005",
-    titre: "Fournisseur : mise à jour tarifaire",
-    message:
-      "Burkina Fournitures Pro a mis à jour ses grilles tarifaires. Vos prochaines commandes seront impactées.",
-    type: "info",
-    categorie: "fournisseur",
-    lue: true,
-    lien: "/fournisseurs",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -90,20 +29,9 @@ const TYPE_CFG = {
 // ─── Composant ────────────────────────────────────────────────────────────────
 
 export default function NotificationBell() {
-  const [notifications, setNotifications, loaded] = useNotifications();
+  const [notifications, setNotifications] = useNotifications();
   const [open, setOpen]   = useState(false);
-  const [seeded, setSeeded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Seed données mock si localStorage vide
-  useEffect(() => {
-    if (loaded && !seeded) {
-      setSeeded(true);
-      if (notifications.length === 0) {
-        setNotifications(MOCK_NOTIFICATIONS);
-      }
-    }
-  }, [loaded, seeded, notifications.length, setNotifications]);
 
   // Fermer le dropdown sur clic extérieur
   useEffect(() => {

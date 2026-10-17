@@ -58,23 +58,16 @@ describe('decisionAcces — Supabase configuré, utilisateur connecté', () => {
   })
 })
 
-describe('decisionAcces — Supabase absent du déploiement', () => {
-  it('ferme quand même le tableau de bord, et dit pourquoi', () => {
-    expect(decisionAcces({ chemin: '/dashboard', connecte: false, ...SANS_SUPABASE })).toEqual({
-      action: 'rediriger',
-      vers: '/connexion?raison=non-configure',
-    })
+describe('decisionAcces — Supabase absent du déploiement (mode démo)', () => {
+  it("laisse le tableau de bord ouvert, données locales", () => {
+    for (const chemin of ['/dashboard', '/paie', '/transactions'])
+      expect(decisionAcces({ chemin, connecte: false, ...SANS_SUPABASE }), chemin)
+        .toEqual({ action: 'laisser' })
   })
 
   it("laisse la page de connexion s'afficher pour porter le message", () => {
     expect(decisionAcces({ chemin: '/connexion', connecte: false, ...SANS_SUPABASE }))
       .toEqual({ action: 'laisser' })
-  })
-
-  it("ne rouvre rien même si un cookie prétend que quelqu'un est connecté", () => {
-    // Sans Supabase, rien ne peut vérifier un cookie : « connecté » n'y veut rien dire.
-    expect(decisionAcces({ chemin: '/paie', connecte: true, ...SANS_SUPABASE }))
-      .toEqual({ action: 'rediriger', vers: '/connexion?raison=non-configure' })
   })
 })
 

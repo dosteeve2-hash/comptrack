@@ -138,7 +138,7 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Transactions</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
@@ -146,7 +146,7 @@ export default function TransactionsPage() {
             {filtered.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Vue toggle */}
           <div className="flex gap-1 p-1 rounded-xl" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
             {([
@@ -245,7 +245,7 @@ export default function TransactionsPage() {
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+              className="px-3 py-2 min-h-9 min-w-10 rounded-lg text-sm font-medium transition-all"
               style={{
                 background: filterType === t ? "var(--bg2)" : "transparent",
                 color: filterType === t ? "var(--text)" : "var(--text2)",
