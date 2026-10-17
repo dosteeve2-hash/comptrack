@@ -101,7 +101,7 @@ export default function HomePage() {
           <ProjectVideo slug="comptrack" lang="fr" title="Vidéo de présentation de CompTrack" />
           <div className="mt-6 text-center">
             <a
-              href="mailto:dosteeve2@gmail.com?subject=Utilisateur%20pilote%20CompTrack"
+              href="mailto:docompaore2@gmail.com?subject=Utilisateur%20pilote%20CompTrack"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold transition-all hover:brightness-110"
               style={{ background: "var(--gold)", color: "var(--navy)" }}
             >
