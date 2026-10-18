@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { usePersistedList } from "@/lib/store";
 import { toast, Toaster } from "sonner";
-import { CalendarClock, CheckCircle2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, Plus } from "lucide-react";
 
 export interface Echeance {
   id: string;
@@ -12,43 +13,7 @@ export interface Echeance {
   statut: "En attente" | "En retard" | "Payé";
 }
 
-const ECHEANCES_INITIALES: Echeance[] = [
-  {
-    id: "1",
-    libelle: "Loyer bureau",
-    montant: 150000,
-    dateLimite: "2026-07-28",
-    statut: "En retard",
-  },
-  {
-    id: "2",
-    libelle: "Abonnement Orange Money",
-    montant: 25000,
-    dateLimite: "2026-08-06",
-    statut: "En attente",
-  },
-  {
-    id: "3",
-    libelle: "Facture Fournisseur Keita",
-    montant: 320000,
-    dateLimite: "2026-08-10",
-    statut: "En attente",
-  },
-  {
-    id: "4",
-    libelle: "Remboursement prêt bancaire",
-    montant: 200000,
-    dateLimite: "2026-08-15",
-    statut: "En attente",
-  },
-  {
-    id: "5",
-    libelle: "Prestation consultant web",
-    montant: 80000,
-    dateLimite: "2026-07-20",
-    statut: "Payé",
-  },
-];
+const STORAGE_KEY = "comptrack_echeances";
 
 function getBadgeStyle(echeance: Echeance): { bg: string; text: string; label: string } {
   if (echeance.statut === "Payé") {
@@ -81,7 +46,26 @@ function formatDate(iso: string): string {
 }
 
 export default function EcheancierPaiements() {
-  const [echeances, setEcheances] = useState<Echeance[]>(ECHEANCES_INITIALES);
+  const [echeances, setEcheances] = usePersistedList<Echeance>(STORAGE_KEY);
+  const [formOuvert, setFormOuvert] = useState(false);
+  const [form, setForm] = useState({ libelle: "", montant: "", dateLimite: "" });
+  const [erreur, setErreur] = useState("");
+
+  const ajouter = (ev: React.FormEvent) => {
+    ev.preventDefault();
+    const montant = Number(form.montant);
+    if (!form.libelle.trim() || isNaN(montant) || montant <= 0 || !form.dateLimite) {
+      setErreur("Indiquez un libellé, un montant positif et une date limite.");
+      return;
+    }
+    setEcheances((prev) => [
+      ...prev,
+      { id: `ech_${Date.now()}`, libelle: form.libelle.trim(), montant, dateLimite: form.dateLimite, statut: "En attente" },
+    ]);
+    setForm({ libelle: "", montant: "", dateLimite: "" });
+    setErreur("");
+    setFormOuvert(false);
+  };
 
   const marquerPaye = (id: string) => {
     setEcheances((prev) =>
@@ -117,10 +101,53 @@ export default function EcheancierPaiements() {
             <CalendarClock className="w-4 h-4" style={{ color: "var(--gold)" }} />
             <h3 className="font-semibold">Échéancier des paiements</h3>
           </div>
-          <span className="text-xs font-mono font-semibold" style={{ color: "var(--red)" }}>
-            Restant : {formatMontantFCFA(total)}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-mono font-semibold" style={{ color: "var(--red)" }}>
+              Restant : {formatMontantFCFA(total)}
+            </span>
+            <button
+              onClick={() => setFormOuvert((o) => !o)}
+              className="inline-flex items-center gap-1.5 px-3 min-h-9 rounded-lg text-xs font-semibold"
+              style={{ background: "var(--gold)", color: "var(--navy)" }}
+            >
+              <Plus className="w-3.5 h-3.5" /> Ajouter une échéance
+            </button>
+          </div>
         </div>
+
+        {formOuvert && (
+          <form onSubmit={ajouter} className="px-6 py-4 border-b grid gap-3 sm:grid-cols-4 items-end" style={{ borderColor: "var(--border)" }}>
+            <div className="sm:col-span-2">
+              <label htmlFor="ech-libelle" className="block text-xs mb-1" style={{ color: "var(--text2)" }}>Libellé</label>
+              <input id="ech-libelle" value={form.libelle} onChange={(e) => setForm((p) => ({ ...p, libelle: e.target.value }))}
+                placeholder="Ce que vous devez payer" className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }} />
+            </div>
+            <div>
+              <label htmlFor="ech-montant" className="block text-xs mb-1" style={{ color: "var(--text2)" }}>Montant (FCFA)</label>
+              <input id="ech-montant" type="number" value={form.montant} onChange={(e) => setForm((p) => ({ ...p, montant: e.target.value }))}
+                placeholder="Montant" className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }} />
+            </div>
+            <div>
+              <label htmlFor="ech-date" className="block text-xs mb-1" style={{ color: "var(--text2)" }}>Date limite</label>
+              <input id="ech-date" type="date" value={form.dateLimite} onChange={(e) => setForm((p) => ({ ...p, dateLimite: e.target.value }))}
+                className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                style={{ background: "var(--bg3)", border: "1px solid var(--border2)", color: "var(--text)" }} />
+            </div>
+            {erreur && <p className="sm:col-span-3 text-xs" style={{ color: "var(--red)" }}>{erreur}</p>}
+            <button type="submit" className="px-4 min-h-10 rounded-xl text-sm font-semibold sm:col-start-4"
+              style={{ background: "var(--gold)", color: "var(--navy)" }}>
+              Enregistrer
+            </button>
+          </form>
+        )}
+
+        {echeances.length === 0 && (
+          <p className="px-6 py-8 text-sm text-center" style={{ color: "var(--text2)" }}>
+            Aucune échéance enregistrée pour le moment.
+          </p>
+        )}
 
         {/* Liste */}
         <div className="divide-y" style={{ borderColor: "var(--border)" }}>

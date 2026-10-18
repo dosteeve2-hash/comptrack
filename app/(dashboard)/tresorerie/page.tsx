@@ -2,29 +2,88 @@
 
 // app/(dashboard)/tresorerie/page.tsx
 import { useState, useEffect, useMemo } from 'react'
-import { Wallet, AlertTriangle, Settings2 } from 'lucide-react'
-import { comptesBancaires, mouvementsRecents, previsionsEntrees, previsionsSorties, genererSoldeQuotidien, fmt } from './tresorerie.data'
+import { Wallet, AlertTriangle, Settings2, Plus, X } from 'lucide-react'
+import { usePersistedList, useTransactions, useFactures } from '@/lib/store'
+import {
+  COMPTES_KEY, SEUIL_KEY, COULEURS_COMPTES,
+  construireMouvements, soldeQuotidien, previsionsEntrees, previsionsSorties, fmt,
+  type CompteBancaire, type DepenseAPayer,
+} from './tresorerie.data'
 import { ComptesBancairesRow, TresorerieAreaChart } from './TresorerieChart'
 import { MouvementsTable, PrevisionnelSection } from './TresoreriePrevisionnel'
 
+function lireSeuil(): number {
+  try {
+    const v = Number(localStorage.getItem(SEUIL_KEY))
+    return Number.isFinite(v) && v > 0 ? v : 0
+  } catch {
+    return 0
+  }
+}
+
 export default function TresoreriePage() {
   const [mounted, setMounted]         = useState(false)
-  const [seuilAlerte, setSeuilAlerte] = useState(1_000_000)
+  const [seuilAlerte, setSeuilAlerte] = useState(0)
   const [editSeuil, setEditSeuil]     = useState(false)
-  const [seuilInput, setSeuilInput]   = useState('1000000')
+  const [seuilInput, setSeuilInput]   = useState('')
+  const [comptes, setComptes]         = usePersistedList<CompteBancaire>(COMPTES_KEY)
+  const [transactions]                = useTransactions()
+  const [factures]                    = useFactures()
+  const [depenses]                    = usePersistedList<DepenseAPayer>('comptrack_depenses')
+  const [compteModal, setCompteModal] = useState(false)
+  const [compteForm, setCompteForm]   = useState({ banque: '', numero: '', solde: '' })
+  const [compteErreur, setCompteErreur] = useState('')
 
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+    const s = lireSeuil()
+    setSeuilAlerte(s)
+    setSeuilInput(s > 0 ? String(s) : '')
+  }, [])
 
-  // Générer une seule fois (côté client uniquement)
-  const soldesQuotidiens = useMemo(() => (mounted ? genererSoldeQuotidien() : []), [mounted])
+  const soldesQuotidiens = useMemo(() => (mounted ? soldeQuotidien(transactions) : []), [mounted, transactions])
+  const mouvements = useMemo(() => construireMouvements(transactions), [transactions])
+  const entrees = useMemo(() => previsionsEntrees(factures), [factures])
+  const sorties = useMemo(() => previsionsSorties(depenses), [depenses])
 
-  const soldeTotal   = comptesBancaires.reduce((a, c) => a + c.solde, 0)
-  const alerteActive = soldeTotal < seuilAlerte
+  const soldeTotal   = comptes.reduce((a, c) => a + c.solde, 0)
+  const alerteActive = seuilAlerte > 0 && comptes.length > 0 && soldeTotal < seuilAlerte
+  const vide = comptes.length === 0 && transactions.length === 0
 
   const handleSeuil = () => {
     const v = parseInt(seuilInput.replace(/\D/g, ''), 10)
-    if (!isNaN(v) && v > 0) setSeuilAlerte(v)
+    const valeur = !isNaN(v) && v > 0 ? v : 0
+    setSeuilAlerte(valeur)
+    try {
+      if (valeur > 0) localStorage.setItem(SEUIL_KEY, String(valeur))
+      else localStorage.removeItem(SEUIL_KEY)
+    } catch {
+      // stockage indisponible : le seuil vaut pour cette session seulement
+    }
     setEditSeuil(false)
+  }
+
+  const ouvrirCompte = () => {
+    setCompteForm({ banque: '', numero: '', solde: '' })
+    setCompteErreur('')
+    setCompteModal(true)
+  }
+
+  const ajouterCompte = (e: React.FormEvent) => {
+    e.preventDefault()
+    const solde = compteForm.solde.trim() === '' ? 0 : Number(compteForm.solde)
+    if (!compteForm.banque.trim() || isNaN(solde)) {
+      setCompteErreur('Indiquez le nom du compte et un solde valide.')
+      return
+    }
+    setComptes((prev) => [...prev, {
+      id: `cpt_${Date.now()}`,
+      banque: compteForm.banque.trim(),
+      numero: compteForm.numero.trim(),
+      solde,
+      couleur: COULEURS_COMPTES[prev.length % COULEURS_COMPTES.length],
+    }])
+    setCompteModal(false)
   }
 
   return (
@@ -38,16 +97,38 @@ export default function TresoreriePage() {
             <h1 className="text-2xl font-bold">Trésorerie</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text2)' }}>
-            Suivi temps réel · 3 comptes bancaires · Juillet 2025
+            {comptes.length} compte{comptes.length > 1 ? 's' : ''} suivi{comptes.length > 1 ? 's' : ''}
           </p>
         </div>
-        <button onClick={() => setEditSeuil(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border transition-all hover:opacity-80"
-          style={{ borderColor: 'var(--border2)', color: 'var(--text2)', background: 'var(--bg2)' }}>
-          <Settings2 className="w-4 h-4" />
-          Seuil d&apos;alerte : {fmt(seuilAlerte)}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={ouvrirCompte}
+            className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+            style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+            <Plus className="w-4 h-4" /> Ajouter un compte
+          </button>
+          <button onClick={() => setEditSeuil(true)}
+            className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-medium border transition-all hover:opacity-80"
+            style={{ borderColor: 'var(--border2)', color: 'var(--text2)', background: 'var(--bg2)' }}>
+            <Settings2 className="w-4 h-4" />
+            {seuilAlerte > 0 ? `Seuil d'alerte : ${fmt(seuilAlerte)}` : "Définir un seuil d'alerte"}
+          </button>
+        </div>
       </div>
+
+      {vide && (
+        <div className="p-8 rounded-2xl border text-center" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+          <p className="text-base font-semibold mb-1">Aucune donnée de trésorerie pour le moment</p>
+          <p className="text-sm mb-5 mx-auto max-w-md" style={{ color: 'var(--text2)' }}>
+            Ajoutez vos comptes (banque, mobile money, caisse) avec leur solde actuel. Les mouvements et le
+            graphique se construisent à partir de vos transactions.
+          </p>
+          <button onClick={ouvrirCompte}
+            className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+            style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+            <Plus className="w-4 h-4" /> Ajouter un compte
+          </button>
+        </div>
+      )}
 
       {/* Alerte solde bas */}
       {alerteActive && (
@@ -64,19 +145,19 @@ export default function TresoreriePage() {
           style={{ background: 'rgba(0,0,0,0.7)' }}>
           <div className="w-full max-w-sm rounded-2xl p-6 space-y-4"
             style={{ background: 'var(--bg2)', border: '1px solid var(--border2)' }}>
-            <h3 className="font-bold">Modifier le seuil d&apos;alerte</h3>
-            <input type="number" value={seuilInput}
+            <h3 className="font-bold">Seuil d&apos;alerte</h3>
+            <input type="number" value={seuilInput} placeholder="Montant en FCFA (vide = pas d'alerte)"
               onChange={(e) => setSeuilInput(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl text-sm outline-none font-mono"
               style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
             <div className="flex gap-3">
               <button onClick={() => setEditSeuil(false)}
-                className="flex-1 py-2 rounded-xl text-sm border"
+                className="flex-1 min-h-10 rounded-xl text-sm border"
                 style={{ borderColor: 'var(--border2)', color: 'var(--text2)' }}>
                 Annuler
               </button>
               <button onClick={handleSeuil}
-                className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                className="flex-1 min-h-10 rounded-xl text-sm font-semibold"
                 style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
                 Enregistrer
               </button>
@@ -85,21 +166,69 @@ export default function TresoreriePage() {
         </div>
       )}
 
+      {/* Modal compte */}
+      {compteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setCompteModal(false)}>
+          <form onSubmit={ajouterCompte} onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl p-6 space-y-3"
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border2)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold">Nouveau compte</h3>
+              <button type="button" onClick={() => setCompteModal(false)} aria-label="Fermer"
+                className="p-2 rounded-xl" style={{ color: 'var(--text2)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {[
+              { label: 'Nom du compte *', key: 'banque', type: 'text', placeholder: 'Banque, mobile money, caisse…' },
+              { label: 'Numéro (facultatif)', key: 'numero', type: 'text', placeholder: 'Référence du compte' },
+              { label: 'Solde actuel (FCFA)', key: 'solde', type: 'number', placeholder: 'Solde actuel' },
+            ].map((f) => (
+              <div key={f.key}>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={compteForm[f.key as 'banque' | 'numero' | 'solde']}
+                  onChange={(e) => setCompteForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            {compteErreur && (
+              <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--red)' }}>
+                {compteErreur}
+              </p>
+            )}
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={() => setCompteModal(false)}
+                className="flex-1 min-h-10 rounded-xl text-sm border"
+                style={{ borderColor: 'var(--border2)', color: 'var(--text2)' }}>
+                Annuler
+              </button>
+              <button type="submit"
+                className="flex-1 min-h-10 rounded-xl text-sm font-semibold"
+                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+                Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Comptes */}
-      <ComptesBancairesRow soldeTotal={soldeTotal} comptes={comptesBancaires} />
+      {comptes.length > 0 && <ComptesBancairesRow soldeTotal={soldeTotal} comptes={comptes} />}
 
       {/* Graphe 90 jours */}
-      <TresorerieAreaChart mounted={mounted} data={soldesQuotidiens} />
+      {soldesQuotidiens.length > 0 && <TresorerieAreaChart mounted={mounted} data={soldesQuotidiens} />}
 
       {/* Mouvements */}
-      <MouvementsTable mouvements={mouvementsRecents} />
+      {mouvements.length > 0 && <MouvementsTable mouvements={mouvements} />}
 
       {/* Prévisionnel */}
-      <PrevisionnelSection
-        entrees={previsionsEntrees}
-        sorties={previsionsSorties}
-        soldeTotal={soldeTotal}
-      />
+      {(entrees.length > 0 || sorties.length > 0) && (
+        <PrevisionnelSection entrees={entrees} sorties={sorties} soldeTotal={soldeTotal} />
+      )}
     </div>
   )
 }

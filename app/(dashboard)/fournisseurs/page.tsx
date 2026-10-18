@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { usePersistedList } from '@/lib/store'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import type { LucideIcon } from 'lucide-react'
-import { Truck, Plus, Search, X, ChevronDown, AlertTriangle, CheckCircle, Clock, Star, Globe, Phone, Mail, ExternalLink } from 'lucide-react'
+import { Truck, Plus, Search, X, ChevronDown, AlertTriangle, CheckCircle, Clock, Globe, Phone, Mail } from 'lucide-react'
 
 type Statut    = 'A jour' | 'En retard' | 'Solde' | 'Suspendu'
 type Categorie = 'Matieres premieres' | 'Energie' | 'Services' | 'Equipement' | 'Logistique' | 'Technologie'
@@ -17,25 +17,11 @@ const CAT_LABELS: Record<Categorie, string> = {
 }
 
 interface Fournisseur {
-  id: number; nom: string; categorie: Categorie; pays: string; ville: string
-  contact: string; email: string; telephone: string; encours: number
-  totalAchats: number; nbCommandes: number; statut: Statut; note: number; derniereCommande: string
+  id: number; nom: string; categorie: Categorie; ville: string
+  contact: string; email: string; telephone: string; encours: number; statut: Statut
 }
 
-const MOCK: Fournisseur[] = [
-  { id: 1,  nom: 'Grossiste Zongo SARL',  categorie: 'Matieres premieres', pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Issa Zongo',      email: 'zongo@grossiste.bf',   telephone: '+226 25 30 11 22', encours: 520000,  totalAchats: 3200000, nbCommandes: 28, statut: 'A jour',    note: 5, derniereCommande: '2026-08-02' },
-  { id: 2,  nom: 'SONATUR Commerce',       categorie: 'Matieres premieres', pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Mme Ouedraogo',   email: 'commerce@sonatur.bf',  telephone: '+226 25 31 44 55', encours: 320000,  totalAchats: 2100000, nbCommandes: 19, statut: 'A jour',    note: 4, derniereCommande: '2026-07-28' },
-  { id: 3,  nom: 'Total Energies BF',      categorie: 'Energie',            pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Direction BF',    email: 'bf@totalenergies.com', telephone: '+226 25 49 60 00', encours: 42000,   totalAchats: 890000,  nbCommandes: 45, statut: 'A jour',    note: 4, derniereCommande: '2026-07-28' },
-  { id: 4,  nom: 'SONABEL',                categorie: 'Energie',            pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Service Client',  email: 'client@sonabel.bf',    telephone: '+226 25 30 60 00', encours: 35000,   totalAchats: 420000,  nbCommandes: 24, statut: 'A jour',    note: 3, derniereCommande: '2026-07-12' },
-  { id: 5,  nom: 'ONATEL BF',              categorie: 'Technologie',        pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Service Pro',     email: 'pro@onatel.bf',        telephone: '+226 25 49 49 49', encours: 28000,   totalAchats: 336000,  nbCommandes: 12, statut: 'En retard', note: 3, derniereCommande: '2026-07-12' },
-  { id: 6,  nom: 'TechPro Ouaga',          categorie: 'Technologie',        pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Seydou Kabore',   email: 'seydou@techpro.bf',    telephone: '+226 76 20 30 40', encours: 75000,   totalAchats: 650000,  nbCommandes: 9,  statut: 'A jour',    note: 5, derniereCommande: '2026-07-15' },
-  { id: 7,  nom: 'Cabinet Sawadogo',       categorie: 'Services',           pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Me Sawadogo',     email: 'cabinet@sawadogo.bf',  telephone: '+226 25 33 44 55', encours: 120000,  totalAchats: 480000,  nbCommandes: 4,  statut: 'A jour',    note: 5, derniereCommande: '2026-07-18' },
-  { id: 8,  nom: 'SONAR Burkina',          categorie: 'Services',           pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Direction Tech',  email: 'tech@sonar.bf',        telephone: '+226 25 30 22 11', encours: 55000,   totalAchats: 220000,  nbCommandes: 4,  statut: 'En retard', note: 2, derniereCommande: '2026-07-30' },
-  { id: 9,  nom: 'CFAO Motors BF',         categorie: 'Equipement',         pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'P. Coulibaly',    email: 'bf@cfao.com',          telephone: '+226 25 36 78 90', encours: 0,       totalAchats: 1800000, nbCommandes: 7,  statut: 'Solde',     note: 4, derniereCommande: '2026-05-20' },
-  { id: 10, nom: 'Bureau Plus BF',         categorie: 'Equipement',         pays: 'Burkina Faso', ville: 'Bobo-Dioulasso', contact: 'Ali Traore',      email: 'ali@bureauplus.bf',    telephone: '+226 20 97 11 22', encours: 18500,   totalAchats: 155000,  nbCommandes: 12, statut: 'A jour',    note: 3, derniereCommande: '2026-07-20' },
-  { id: 11, nom: 'Institut FASEG',         categorie: 'Services',           pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'Dr Konate',       email: 'formation@faseg.bf',   telephone: '+226 25 30 70 64', encours: 95000,   totalAchats: 380000,  nbCommandes: 4,  statut: 'A jour',    note: 4, derniereCommande: '2026-07-22' },
-  { id: 12, nom: 'SCI Patrimoniale BF',    categorie: 'Services',           pays: 'Burkina Faso', ville: 'Ouagadougou',    contact: 'M. Compaore',     email: 'sci@patrimoniale.bf',  telephone: '+226 25 35 88 99', encours: 250000,  totalAchats: 3000000, nbCommandes: 12, statut: 'A jour',    note: 4, derniereCommande: '2026-07-01' },
-]
+const STORAGE_KEY = 'comptrack_fournisseurs'
 
 const CATS: Categorie[] = ['Matieres premieres', 'Energie', 'Services', 'Equipement', 'Logistique', 'Technologie']
 const STATUTS: Statut[] = ['A jour', 'En retard', 'Solde', 'Suspendu']
@@ -64,37 +50,52 @@ function StatutBadge({ s }: { s: Statut }) {
   )
 }
 
-function Stars({ n }: { n: number }) {
-  return (
-    <span className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} className="w-3 h-3" fill={i < n ? '#D4AF37' : 'none'} style={{ color: '#D4AF37' }} />
-      ))}
-    </span>
-  )
-}
-
 export default function FournisseursPage() {
   const [search,       setSearch]       = useState('')
   const [filtreCat,    setFiltreCat]    = useState<Categorie | 'Toutes'>('Toutes')
   const [filtreStatut, setFiltreStatut] = useState<Statut | 'Tous'>('Tous')
   const [selected,     setSelected]     = useState<Fournisseur | null>(null)
+  const [fournisseurs, setFournisseurs] = usePersistedList<Fournisseur>(STORAGE_KEY)
+  const [modalOpen,    setModalOpen]    = useState(false)
+  const [formError,    setFormError]    = useState('')
+  const [form,         setForm]         = useState({
+    nom: '', categorie: 'Services' as Categorie, contact: '', ville: '', telephone: '', email: '',
+    encours: '', statut: 'A jour' as Statut,
+  })
 
-  const filtered = useMemo(() => MOCK.filter(f => {
+  const openModal = () => {
+    setForm({ nom: '', categorie: 'Services', contact: '', ville: '', telephone: '', email: '', encours: '', statut: 'A jour' })
+    setFormError('')
+    setModalOpen(true)
+  }
+
+  const handleAdd = (ev: React.FormEvent) => {
+    ev.preventDefault()
+    const encours = form.encours.trim() === '' ? 0 : Number(form.encours)
+    if (!form.nom.trim()) { setFormError('Indiquez le nom du fournisseur.'); return }
+    if (isNaN(encours) || encours < 0) { setFormError('Encours : saisissez un montant positif ou laissez vide.'); return }
+    setFournisseurs(prev => [{
+      id: Date.now(), nom: form.nom.trim(), categorie: form.categorie, contact: form.contact.trim(),
+      ville: form.ville.trim(), telephone: form.telephone.trim(), email: form.email.trim(),
+      encours, statut: form.statut,
+    }, ...prev])
+    setModalOpen(false)
+  }
+
+  const filtered = useMemo(() => fournisseurs.filter(f => {
     const ok1 = f.nom.toLowerCase().includes(search.toLowerCase()) || f.contact.toLowerCase().includes(search.toLowerCase())
     const ok2 = filtreCat === 'Toutes' || f.categorie === filtreCat
     const ok3 = filtreStatut === 'Tous' || f.statut === filtreStatut
     return ok1 && ok2 && ok3
-  }), [search, filtreCat, filtreStatut])
+  }), [fournisseurs, search, filtreCat, filtreStatut])
 
-  const totalEncours = MOCK.reduce((s, f) => s + f.encours, 0)
-  const totalAchats  = MOCK.reduce((s, f) => s + f.totalAchats, 0)
-  const nbEnRetard   = MOCK.filter(f => f.statut === 'En retard').length
-  const nbAvecEncours = MOCK.filter(f => f.encours > 0).length
+  const totalEncours = fournisseurs.reduce((s, f) => s + f.encours, 0)
+  const nbEnRetard   = fournisseurs.filter(f => f.statut === 'En retard').length
+  const nbAvecEncours = fournisseurs.filter(f => f.encours > 0).length
 
   const chartData = CATS.map(cat => ({
     name: CAT_LABELS[cat].split(' ')[0],
-    encours: MOCK.filter(f => f.categorie === cat).reduce((s, f) => s + f.encours, 0),
+    encours: fournisseurs.filter(f => f.categorie === cat).reduce((s, f) => s + f.encours, 0),
     color: CAT_COLOR[cat],
   })).filter(d => d.encours > 0)
 
@@ -104,10 +105,10 @@ export default function FournisseursPage() {
         <div>
           <h1 className="text-2xl font-bold">Fournisseurs</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>
-            {MOCK.length} fournisseurs actifs — encours {fmt(totalEncours)}
+            {fournisseurs.length} fournisseur{fournisseurs.length > 1 ? 's' : ''} — encours {fmt(totalEncours)}
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+        <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
           style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
           <Plus className="w-4 h-4" /> Ajouter fournisseur
         </button>
@@ -115,9 +116,9 @@ export default function FournisseursPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total encours',        value: fmt(totalEncours),              sub: `${MOCK.length} fournisseurs`,  accent: false },
+          { label: 'Total encours',        value: fmt(totalEncours),              sub: `${fournisseurs.length} fournisseur${fournisseurs.length > 1 ? 's' : ''}`,  accent: false },
           { label: 'En retard',            value: `${nbEnRetard} fournisseur${nbEnRetard !== 1 ? 's' : ''}`, sub: 'paiements en souffrance', accent: nbEnRetard > 0 },
-          { label: 'Volume achats cumule', value: fmtK(totalAchats) + ' FCFA',    sub: 'total cumule',                 accent: false },
+          { label: 'Avec encours',         value: String(nbAvecEncours),          sub: 'à régler',                     accent: false },
           { label: 'Encours moyen',        value: fmt(Math.round(totalEncours / Math.max(nbAvecEncours, 1))), sub: 'par fournisseur actif', accent: false },
         ].map((k, i) => (
           <div key={i} className="p-5 rounded-2xl border" style={{
@@ -131,6 +132,7 @@ export default function FournisseursPage() {
         ))}
       </div>
 
+      {chartData.length > 0 && (
       <div className="p-6 rounded-2xl border" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
         <h3 className="font-semibold mb-4">Encours par categorie</h3>
         <ResponsiveContainer width="100%" height={180}>
@@ -146,6 +148,7 @@ export default function FournisseursPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 flex-1 min-w-[200px] px-3 py-2 rounded-xl"
@@ -176,16 +179,41 @@ export default function FournisseursPage() {
         <p className="text-sm ml-auto" style={{ color: 'var(--text2)' }}>{filtered.length} resultat{filtered.length > 1 ? 's' : ''}</p>
       </div>
 
-      <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
-        <table className="w-full">
+      {fournisseurs.length === 0 && (
+        <div className="p-8 rounded-2xl border text-center" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+          <p className="text-sm mb-4" style={{ color: 'var(--text2)' }}>Aucun fournisseur enregistré pour le moment.</p>
+          <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+            style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+            <Plus className="w-4 h-4" /> Ajouter un fournisseur
+          </button>
+        </div>
+      )}
+      {fournisseurs.length > 0 && (
+      <div className="rounded-2xl border overflow-x-auto" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              {['Fournisseur', 'Categorie', 'Ville', 'Encours', 'Total achats', 'Note', 'Statut'].map(h => (
+              {['Fournisseur', 'Categorie', 'Ville', 'Encours', 'Statut'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium" style={{ color: 'var(--text2)' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--text2)' }}>
+                  {fournisseurs.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <span>Aucun fournisseur enregistré pour le moment.</span>
+                      <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+                        style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+                        <Plus className="w-4 h-4" /> Ajouter un fournisseur
+                      </button>
+                    </div>
+                  ) : 'Aucun fournisseur ne correspond aux filtres'}
+                </td>
+              </tr>
+            )}
             {filtered.map(f => (
               <tr key={f.id} onClick={() => setSelected(f)}
                 className="hover:brightness-110 cursor-pointer transition-all"
@@ -209,19 +237,19 @@ export default function FournisseursPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--text2)' }}>
-                  <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" />{f.ville}</span>
+                  <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" />{f.ville || '—'}</span>
                 </td>
                 <td className="px-4 py-3.5 text-sm font-bold font-mono" style={{ color: f.encours > 0 ? '#ef4444' : 'var(--text2)' }}>
                   {f.encours > 0 ? `-${f.encours.toLocaleString('fr-FR')}` : '—'}
                 </td>
-                <td className="px-4 py-3.5 text-sm font-mono" style={{ color: 'var(--text2)' }}>{fmtK(f.totalAchats)}</td>
-                <td className="px-4 py-3.5"><Stars n={f.note} /></td>
                 <td className="px-4 py-3.5"><StatutBadge s={f.statut} /></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      )}
 
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -233,7 +261,6 @@ export default function FournisseursPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-bold text-lg">{selected.nom}</h3>
-                <Stars n={selected.note} />
               </div>
               <button onClick={() => setSelected(null)} className="p-2 rounded-xl hover:brightness-110"
                 style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
@@ -243,12 +270,10 @@ export default function FournisseursPage() {
             <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
               {[
                 ['Categorie',   CAT_LABELS[selected.categorie]],
-                ['Contact',     selected.contact],
-                ['Ville',       `${selected.ville}, ${selected.pays}`],
+                ['Contact',     selected.contact || '—'],
+                ['Ville',       selected.ville || '—'],
                 ['Encours',     selected.encours > 0 ? fmt(selected.encours) : 'Solde'],
-                ['Total achats', fmt(selected.totalAchats)],
-                ['Commandes',   String(selected.nbCommandes)],
-                ['Derniere cmd', selected.derniereCommande],
+                ['Statut',      STATUT_LABELS[selected.statut]],
               ].map(([label, val], i) => (
                 <div key={i} className="flex items-center justify-between px-4 py-3"
                   style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'var(--bg2)' : 'transparent' }}>
@@ -258,22 +283,82 @@ export default function FournisseursPage() {
               ))}
             </div>
             <div className="flex gap-2">
-              <a href={`tel:${selected.telephone}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium hover:opacity-80"
-                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
-                <Phone className="w-4 h-4" /> Appeler
-              </a>
-              <a href={`mailto:${selected.email}`}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium hover:opacity-80"
-                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
-                <Mail className="w-4 h-4" /> Email
-              </a>
-              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
-                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
-                <ExternalLink className="w-4 h-4" /> Profil
-              </button>
+              {selected.telephone && (
+                <a href={`tel:${selected.telephone}`}
+                  className="flex-1 flex items-center justify-center gap-2 min-h-10 rounded-xl text-sm font-medium hover:opacity-80"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
+                  <Phone className="w-4 h-4" /> Appeler
+                </a>
+              )}
+              {selected.email && (
+                <a href={`mailto:${selected.email}`}
+                  className="flex-1 flex items-center justify-center gap-2 min-h-10 rounded-xl text-sm font-medium hover:opacity-80"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
+                  <Mail className="w-4 h-4" /> Email
+                </a>
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setModalOpen(false)}>
+          <form onSubmit={handleAdd} className="w-full max-w-md rounded-3xl p-6 space-y-3 max-h-[90vh] overflow-y-auto"
+            style={{ background: 'var(--bg3)', border: '1px solid var(--border2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Nouveau fournisseur</h3>
+              <button type="button" onClick={() => setModalOpen(false)} aria-label="Fermer"
+                className="p-2 rounded-xl hover:brightness-110" style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {[
+              { label: 'Nom *', key: 'nom', type: 'text', placeholder: 'Nom du fournisseur' },
+              { label: 'Contact', key: 'contact', type: 'text', placeholder: 'Personne à joindre' },
+              { label: 'Ville', key: 'ville', type: 'text', placeholder: 'Ville' },
+              { label: 'Téléphone', key: 'telephone', type: 'tel', placeholder: 'Numéro de téléphone' },
+              { label: 'Email', key: 'email', type: 'email', placeholder: 'Adresse e-mail' },
+              { label: 'Encours dû (FCFA)', key: 'encours', type: 'number', placeholder: 'Laisser vide si rien à régler' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={form[f.key as 'nom' | 'contact' | 'ville' | 'telephone' | 'email' | 'encours']}
+                  onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Catégorie</label>
+                <select value={form.categorie} onChange={e => setForm(p => ({ ...p, categorie: e.target.value as Categorie }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                  {CATS.map(c => <option key={c} value={c}>{CAT_LABELS[c]}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Statut</label>
+                <select value={form.statut} onChange={e => setForm(p => ({ ...p, statut: e.target.value as Statut }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                  {STATUTS.map(st => <option key={st} value={st}>{STATUT_LABELS[st]}</option>)}
+                </select>
+              </div>
+            </div>
+            {formError && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>{formError}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setModalOpen(false)} className="flex-1 min-h-10 rounded-xl text-sm font-medium"
+                style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}>Annuler</button>
+              <button type="submit" className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>Enregistrer</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

@@ -8,7 +8,9 @@ export function FactureDetail({
   facture,
   onClose,
   onPrint,
+  entrepriseNom = 'Votre entreprise',
 }: {
+  entrepriseNom?: string
   facture: Facture | null
   onClose: () => void
   onPrint: (f: Facture) => void
@@ -45,9 +47,7 @@ export function FactureDetail({
                   style={{ background: 'var(--green)', color: '#000' }}>CT</div>
                 <span className="font-bold">CompTrack</span>
               </div>
-              <p className="text-sm" style={{ color: 'var(--text2)' }}>Mon Commerce</p>
-              <p className="text-sm" style={{ color: 'var(--text2)' }}>Ouagadougou, Burkina Faso</p>
-              <p className="text-sm" style={{ color: 'var(--text2)' }}>contact@moncommerce.bf</p>
+              <p className="text-sm" style={{ color: 'var(--text2)' }}>{entrepriseNom}</p>
             </div>
             <div className="text-right">
               <p className="font-mono font-bold text-lg">{facture.numero}</p>

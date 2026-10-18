@@ -98,8 +98,8 @@ export default function ConnexionFormulaire() {
           </div>
 
           <div className="flex justify-end">
-            <a href="#" className="min-h-9 min-w-10 inline-flex items-center justify-center text-sm transition-opacity hover:opacity-80" style={{ color: "var(--gold)" }}>
-              Mot de passe oublié ?
+            <a href="mailto:docompaore2@gmail.com?subject=Mot%20de%20passe%20oubli%C3%A9%20CompTrack" className="min-h-9 min-w-10 inline-flex items-center justify-center text-sm transition-opacity hover:opacity-80" style={{ color: "var(--gold)" }}>
+              Mot de passe oublié ? Écrivez-nous
             </a>
           </div>
 

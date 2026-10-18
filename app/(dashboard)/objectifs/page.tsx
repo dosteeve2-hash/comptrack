@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePersistedList, STORAGE_KEYS } from '@/lib/store'
 import { Target, Plus, CheckCircle2, AlertTriangle, Clock, X, TrendingUp, Users, Wallet, Settings } from 'lucide-react'
 
 type Categorie = 'Financier' | 'Commercial' | 'RH' | 'Operationnel'
@@ -11,17 +12,7 @@ interface Objectif {
   cible: number; actuel: number; unite: string; echeance: string; statut: StatutObj
 }
 
-const MOCK: Objectif[] = [
-  { id: 1, titre: "CA mensuel juillet 2026",        description: "Atteindre 4 millions FCFA de chiffre d'affaires en juillet", categorie: 'Financier',    cible: 4000000, actuel: 4035000, unite: 'FCFA',    echeance: '2026-07-31', statut: 'Atteint'   },
-  { id: 2, titre: "Reduire charges fixes de 15%",   description: "Renogocier loyer, optimiser factures energie et telecom",     categorie: 'Financier',    cible: 15,      actuel: 6,       unite: '%',      echeance: '2026-12-31', statut: 'En cours'  },
-  { id: 3, titre: "Fonds de roulement 3 mois",      description: "Maintenir en tresorerie l'equivalent de 3 mois de charges",  categorie: 'Financier',    cible: 3000000, actuel: 3200000, unite: 'FCFA',    echeance: '2026-06-30', statut: 'Atteint'   },
-  { id: 4, titre: "20 clients actifs",               description: "Atteindre 20 clients avec contrat actif ou abonnement",      categorie: 'Commercial',   cible: 20,      actuel: 14,      unite: 'clients', echeance: '2026-09-30', statut: 'En cours'  },
-  { id: 5, titre: "Marge brute superieure a 40%",   description: "Optimiser le mix produits/services pour ameliorer la marge",  categorie: 'Financier',    cible: 40,      actuel: 34,      unite: '%',      echeance: '2026-12-31', statut: 'En cours'  },
-  { id: 6, titre: "Recruter 3 commerciaux",          description: "Renforcer l'equipe commerciale terrain sur Ouaga et Bobo",   categorie: 'RH',           cible: 3,       actuel: 1,       unite: 'employes', echeance: '2026-10-31', statut: 'En cours' },
-  { id: 7, titre: "Taux recouvrement 90%",           description: "Reduire les creances impayees, relancer systematiquement",   categorie: 'Operationnel', cible: 90,      actuel: 82,      unite: '%',      echeance: '2026-09-30', statut: 'En cours'  },
-  { id: 8, titre: "100 prospects contacts",          description: "Prospecter 100 nouvelles entreprises avant fin Q3 2026",     categorie: 'Commercial',   cible: 100,     actuel: 38,      unite: 'contacts', echeance: '2026-09-30', statut: 'En retard' },
-  { id: 9, titre: "Certification ISO 9001",          description: "Engager le processus de certification qualite ISO 9001",     categorie: 'Operationnel', cible: 100,     actuel: 20,      unite: '%',      echeance: '2026-12-31', statut: 'En pause'  },
-]
+const UNITES = ['FCFA', '%', 'clients', 'employés', 'contacts', 'unités']
 
 const CAT_ICON: Record<Categorie, typeof Target> = {
   'Financier': Wallet, 'Commercial': TrendingUp, 'RH': Users, 'Operationnel': Settings,
@@ -54,13 +45,58 @@ function Progress({ pct, statut }: { pct: number; statut: StatutObj }) {
 export default function ObjectifsPage() {
   const [filtreCat, setFiltreCat] = useState<Categorie | 'Toutes'>('Toutes')
   const [selected, setSelected] = useState<Objectif | null>(null)
+  const [objectifs, setObjectifs] = usePersistedList<Objectif>(STORAGE_KEYS.objectifs)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [form, setForm] = useState({
+    titre: '', description: '', categorie: 'Financier' as Categorie,
+    cible: '', actuel: '0', unite: 'FCFA', echeance: '',
+  })
+  const [actuelEdit, setActuelEdit] = useState('')
 
-  const filtered = MOCK.filter(o => filtreCat === 'Toutes' || o.categorie === filtreCat)
+  const openModal = () => {
+    setForm({ titre: '', description: '', categorie: 'Financier', cible: '', actuel: '0', unite: 'FCFA', echeance: '' })
+    setFormError('')
+    setModalOpen(true)
+  }
 
-  const nbAtteints  = MOCK.filter(o => o.statut === 'Atteint').length
-  const nbEnCours   = MOCK.filter(o => o.statut === 'En cours').length
-  const nbEnRetard  = MOCK.filter(o => o.statut === 'En retard').length
-  const avgProgress = Math.round(MOCK.reduce((s, o) => s + Math.min((o.actuel / o.cible) * 100, 100), 0) / MOCK.length)
+  const statutPour = (o: { cible: number; actuel: number; echeance: string; statut?: StatutObj }): StatutObj => {
+    if (o.actuel >= o.cible) return 'Atteint'
+    if (o.echeance && new Date(o.echeance) < new Date()) return 'En retard'
+    return 'En cours'
+  }
+
+  const handleAdd = (ev: React.FormEvent) => {
+    ev.preventDefault()
+    const cible = Number(form.cible)
+    const actuel = Number(form.actuel === '' ? '0' : form.actuel)
+    if (!form.titre.trim() || isNaN(cible) || cible <= 0 || isNaN(actuel) || actuel < 0) {
+      setFormError('Indiquez un titre, une cible positive et une valeur actuelle valide.')
+      return
+    }
+    const base = { cible, actuel, echeance: form.echeance }
+    setObjectifs(prev => [{
+      id: Date.now(), titre: form.titre.trim(), description: form.description.trim(),
+      categorie: form.categorie, cible, actuel, unite: form.unite, echeance: form.echeance,
+      statut: statutPour(base),
+    }, ...prev])
+    setModalOpen(false)
+  }
+
+  const mettreAJour = (id: number) => {
+    const actuel = Number(actuelEdit)
+    if (isNaN(actuel) || actuel < 0) return
+    setObjectifs(prev => prev.map(o => (o.id === id ? { ...o, actuel, statut: statutPour({ ...o, actuel }) } : o)))
+    setSelected(null)
+  }
+
+  const liste = objectifs
+  const filtered = liste.filter(o => filtreCat === 'Toutes' || o.categorie === filtreCat)
+
+  const nbAtteints  = liste.filter(o => o.statut === 'Atteint').length
+  const nbEnCours   = liste.filter(o => o.statut === 'En cours').length
+  const nbEnRetard  = liste.filter(o => o.statut === 'En retard').length
+  const avgProgress = liste.length ? Math.round(liste.reduce((s, o) => s + Math.min((o.actuel / o.cible) * 100, 100), 0) / liste.length) : 0
 
   const CATS: Categorie[] = ['Financier', 'Commercial', 'RH', 'Operationnel']
 
@@ -70,10 +106,10 @@ export default function ObjectifsPage() {
         <div>
           <h1 className="text-2xl font-bold">Objectifs</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>
-            {nbAtteints}/{MOCK.length} objectifs atteints — progression globale {avgProgress}%
+            {nbAtteints}/{liste.length} objectifs atteints — progression globale {avgProgress}%
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
+        <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
           style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
           <Plus className="w-4 h-4" /> Nouvel objectif
         </button>
@@ -92,7 +128,7 @@ export default function ObjectifsPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Atteints',      value: String(nbAtteints),  sub: `sur ${MOCK.length} total`, color: '#10b981' },
+          { label: 'Atteints',      value: String(nbAtteints),  sub: `sur ${liste.length} total`, color: '#10b981' },
           { label: 'En cours',      value: String(nbEnCours),   sub: 'progression active',       color: '#D4AF37' },
           { label: 'En retard',     value: String(nbEnRetard),  sub: 'action requise',           color: '#ef4444' },
           { label: 'Progression',   value: `${avgProgress}%`,   sub: 'moyenne tous objectifs',   color: 'var(--text)' },
@@ -118,12 +154,25 @@ export default function ObjectifsPage() {
               }}>
               {cat === 'Toutes' ? 'Tous' : cat}
               <span className="ml-1.5 text-xs opacity-70">
-                {cat === 'Toutes' ? MOCK.length : MOCK.filter(o => o.categorie === cat).length}
+                {cat === 'Toutes' ? liste.length : liste.filter(o => o.categorie === cat).length}
               </span>
             </button>
           )
         })}
       </div>
+
+      {liste.length === 0 && (
+        <div className="p-8 rounded-2xl border text-center" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+          <p className="text-base font-semibold mb-1">Aucun objectif pour le moment</p>
+          <p className="text-sm mb-5 mx-auto max-w-md" style={{ color: 'var(--text2)' }}>
+            Fixez une cible chiffrée (chiffre d&apos;affaires, nombre de clients, taux de recouvrement…) et suivez votre progression.
+          </p>
+          <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+            style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+            <Plus className="w-4 h-4" /> Ajouter un objectif
+          </button>
+        </div>
+      )}
 
       <div className="grid gap-4">
         {filtered.map(obj => {
@@ -132,7 +181,7 @@ export default function ObjectifsPage() {
           const sCfg = STATUT_CFG[obj.statut]
           const SIcon = sCfg.icon
           return (
-            <div key={obj.id} onClick={() => setSelected(obj)}
+            <div key={obj.id} onClick={() => { setSelected(obj); setActuelEdit(String(obj.actuel)) }}
               className="p-5 rounded-2xl border cursor-pointer hover:brightness-110 transition-all"
               style={{ background: 'var(--bg2)', borderColor: obj.statut === 'Atteint' ? 'rgba(16,185,129,0.3)' : obj.statut === 'En retard' ? 'rgba(239,68,68,0.3)' : 'var(--border)' }}>
               <div className="flex items-start justify-between mb-3">
@@ -207,17 +256,82 @@ export default function ObjectifsPage() {
                 </div>
               ))}
             </div>
+            <div>
+              <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Mettre à jour la valeur actuelle ({selected.unite})</label>
+              <input type="number" min="0" value={actuelEdit} onChange={e => setActuelEdit(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
+            </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setSelected(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium hover:opacity-80"
+              <button onClick={() => setSelected(null)} className="flex-1 min-h-10 rounded-xl text-sm font-medium hover:opacity-80"
                 style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
                 Fermer
               </button>
-              <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
+              <button onClick={() => mettreAJour(selected.id)} className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
                 style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
-                Modifier
+                Enregistrer
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setModalOpen(false)}>
+          <form onSubmit={handleAdd} className="w-full max-w-md rounded-3xl p-6 space-y-3 max-h-[90vh] overflow-y-auto"
+            style={{ background: 'var(--bg3)', border: '1px solid var(--border2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Nouvel objectif</h3>
+              <button type="button" onClick={() => setModalOpen(false)} aria-label="Fermer"
+                className="p-2 rounded-xl hover:brightness-110" style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {[
+              { label: 'Titre *', key: 'titre', type: 'text', placeholder: 'Ce que vous voulez atteindre' },
+              { label: 'Description', key: 'description', type: 'text', placeholder: 'Précisions (facultatif)' },
+              { label: 'Cible *', key: 'cible', type: 'number', placeholder: 'Valeur à atteindre' },
+              { label: 'Valeur actuelle', key: 'actuel', type: 'number', placeholder: 'Où vous en êtes' },
+              { label: 'Échéance', key: 'echeance', type: 'date', placeholder: '' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={form[f.key as 'titre' | 'description' | 'cible' | 'actuel' | 'echeance']}
+                  onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Catégorie</label>
+                <select value={form.categorie} onChange={e => setForm(p => ({ ...p, categorie: e.target.value as Categorie }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                  {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Unité</label>
+                <select value={form.unite} onChange={e => setForm(p => ({ ...p, unite: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                  {UNITES.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+            </div>
+            {formError && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>{formError}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setModalOpen(false)} className="flex-1 min-h-10 rounded-xl text-sm font-medium"
+                style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}>Annuler</button>
+              <button type="submit" className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>Enregistrer</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

@@ -3,14 +3,33 @@
 // app/(dashboard)/bilan/page.tsx
 import { useState } from 'react'
 import { CheckCircle, AlertCircle, FileText, ArrowLeftRight } from 'lucide-react'
-import { actifN, passifN, somme, fmt } from './bilan.data'
+import { usePersistedList } from '@/lib/store'
+import { actifN, passifN, somme, fmt, clePoste, BILAN_KEY, type SectionBilan, type ValeursBilan } from './bilan.data'
 import { BilanSectionCard } from './BilanSectionCard'
 
 export default function BilanPage() {
   const [exercice, setExercice] = useState<'N' | 'N1'>('N')
 
-  const totalActif  = somme(actifN,  exercice)
-  const totalPassif = somme(passifN, exercice)
+  const [lignes, setLignes] = usePersistedList<{ cle: string; n: number; n1: number }>(BILAN_KEY)
+
+  const valeurs = lignes.reduce<ValeursBilan>((acc, l) => {
+    acc[l.cle] = { n: l.n, n1: l.n1 }
+    return acc
+  }, {})
+
+  const changer = (section: SectionBilan, label: string, ex: 'N' | 'N1', montant: number) => {
+    const cle = clePoste(section, { label })
+    setLignes((prev) => {
+      const existante = prev.find((l) => l.cle === cle)
+      const base = { cle, n: existante?.n ?? 0, n1: existante?.n1 ?? 0 }
+      const maj = ex === 'N' ? { ...base, n: montant } : { ...base, n1: montant }
+      return existante ? prev.map((l) => (l.cle === cle ? maj : l)) : [...prev, maj]
+    })
+  }
+
+  const totalActif  = somme(actifN,  valeurs, exercice)
+  const totalPassif = somme(passifN, valeurs, exercice)
+  const saisi       = totalActif > 0 || totalPassif > 0
   const equilibre   = Math.abs(totalActif - totalPassif) < 1
 
   return (
@@ -49,7 +68,7 @@ export default function BilanPage() {
           </div>
 
           {/* Badge équilibre */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium"
+          {saisi && <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium"
             style={{
               background: equilibre ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
               border:     `1px solid ${equilibre ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
@@ -58,19 +77,19 @@ export default function BilanPage() {
             {equilibre
               ? <><CheckCircle className="w-4 h-4" /> Bilan équilibré</>
               : <><AlertCircle className="w-4 h-4" /> Déséquilibre détecté</>}
-          </div>
+          </div>}
 
-          {/* Bouton PDF (placeholder) */}
           <button
+            onClick={() => window.print()}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all hover:opacity-80"
             style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
-            <ArrowLeftRight className="w-4 h-4" /> Exporter PDF
+            <ArrowLeftRight className="w-4 h-4" /> Imprimer / PDF
           </button>
         </div>
       </div>
 
       {/* Totaux rapides */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-2xl border p-5 flex flex-col gap-1"
           style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text3)' }}>
@@ -97,7 +116,7 @@ export default function BilanPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold px-1">Actif</h2>
           {actifN.map((section) => (
-            <BilanSectionCard key={section.titre} section={section} exercice={exercice} />
+            <BilanSectionCard key={section.titre} section={section} exercice={exercice} valeurs={valeurs} onChange={changer} />
           ))}
         </div>
 
@@ -105,15 +124,14 @@ export default function BilanPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold px-1">Passif</h2>
           {passifN.map((section) => (
-            <BilanSectionCard key={section.titre} section={section} exercice={exercice} />
+            <BilanSectionCard key={section.titre} section={section} exercice={exercice} valeurs={valeurs} onChange={changer} />
           ))}
         </div>
       </div>
 
       {/* Note de bas de page */}
       <p className="text-xs text-center pb-2" style={{ color: 'var(--text3)' }}>
-        Données illustratives — Mettez à jour les montants dans{' '}
-        <code className="font-mono">bilan.data.ts</code> après validation comptable.
+        Saisissez vos montants poste par poste : ils restent sur cet appareil. À faire valider par un comptable avant tout usage officiel.
       </p>
     </div>
   )

@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { usePersistedList } from '@/lib/store'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
 import {
-  TrendingDown, Plus, Search, Filter, Download,
+  TrendingDown, Plus, Search, Filter,
   X, ChevronDown, AlertTriangle, CheckCircle, Clock,
 } from 'lucide-react'
 
@@ -26,24 +27,7 @@ interface Depense {
   notes?: string
 }
 
-// ─── Données mock ─────────────────────────────────────────────────────────────
-const MOCK_DEPENSES: Depense[] = [
-  { id: 1, description: 'Loyer local commercial Ouaga 2000', categorie: 'Immobilier', montant: 250000, date: '2026-07-01', statut: 'Payée',      fournisseur: 'SCI Patrimoniale BF',  reference: 'DEP-2607-001' },
-  { id: 2, description: 'Achat marchandises — lot juillet',   categorie: 'Stock',       montant: 520000, date: '2026-07-03', statut: 'Payée',      fournisseur: 'SONATUR Commerce',     reference: 'DEP-2607-002' },
-  { id: 3, description: 'Salaires — Juillet 2026',            categorie: 'RH',          montant: 680000, date: '2026-07-05', statut: 'Payée',      fournisseur: 'Interne',              reference: 'DEP-2607-003' },
-  { id: 4, description: 'CNSS cotisations patronales',        categorie: 'Fiscalité',   montant: 82000,  date: '2026-07-10', statut: 'Payée',      fournisseur: 'CNSS Burkina',         reference: 'DEP-2607-004' },
-  { id: 5, description: 'Facture SONABEL — électricité',      categorie: 'Charges',     montant: 35000,  date: '2026-07-12', statut: 'Payée',      fournisseur: 'SONABEL',              reference: 'DEP-2607-005' },
-  { id: 6, description: 'Abonnement Fibre ONATEL',            categorie: 'Charges',     montant: 28000,  date: '2026-07-12', statut: 'Payée',      fournisseur: 'ONATEL BF',            reference: 'DEP-2607-006' },
-  { id: 7, description: 'Maintenance matériel informatique',  categorie: 'Équipement',  montant: 75000,  date: '2026-07-15', statut: 'Payée',      fournisseur: 'TechPro Ouaga',        reference: 'DEP-2607-007' },
-  { id: 8, description: 'Conseil juridique — contrat bail',   categorie: 'Services',    montant: 120000, date: '2026-07-18', statut: 'Payée',      fournisseur: 'Cabinet Sawadogo',     reference: 'DEP-2607-008' },
-  { id: 9, description: 'Achat fournitures bureau',           categorie: 'Charges',     montant: 18500,  date: '2026-07-20', statut: 'En attente', fournisseur: 'Bureau Plus BF',       reference: 'DEP-2607-009' },
-  { id: 10, description: 'Formation équipe commerciale',      categorie: 'RH',          montant: 95000,  date: '2026-07-22', statut: 'En attente', fournisseur: 'Institut FASEG',       reference: 'DEP-2607-010' },
-  { id: 11, description: 'TVA déclarée DGI — T2 2026',        categorie: 'Fiscalité',   montant: 148000, date: '2026-07-25', statut: 'En retard',  fournisseur: 'DGI Burkina',          reference: 'DEP-2607-011', notes: 'Dépôt effectué, paiement en attente' },
-  { id: 12, description: 'Carburant véhicules livraison',     categorie: 'Charges',     montant: 42000,  date: '2026-07-28', statut: 'En attente', fournisseur: 'Total Énergies BF',    reference: 'DEP-2607-012' },
-  { id: 13, description: 'Assurance multirisque local',       categorie: 'Services',    montant: 55000,  date: '2026-07-30', statut: 'En retard',  fournisseur: 'SONAR Burkina',        reference: 'DEP-2607-013', notes: 'Renouvellement en cours' },
-  { id: 14, description: 'Achat stock — approvisionnement',   categorie: 'Stock',       montant: 385000, date: '2026-08-02', statut: 'En attente', fournisseur: 'Grossiste Zongo SARL', reference: 'DEP-2608-001' },
-  { id: 15, description: 'IUTS employés — Juillet',           categorie: 'Fiscalité',   montant: 67000,  date: '2026-08-05', statut: 'Payée',      fournisseur: 'DGI Burkina',          reference: 'DEP-2608-002' },
-]
+const STORAGE_KEY = 'comptrack_depenses'
 
 const CATEGORIES: Categorie[] = ['Immobilier', 'Stock', 'RH', 'Charges', 'Équipement', 'Services', 'Fiscalité']
 const STATUTS: Statut[]       = ['Payée', 'En attente', 'En retard']
@@ -76,24 +60,64 @@ export default function DepensesPage() {
   const [filtreCat,    setFiltreCat]    = useState<Categorie | 'Toutes'>('Toutes')
   const [filtreStatut, setFiltreStatut] = useState<Statut | 'Tous'>('Tous')
   const [selected,     setSelected]     = useState<Depense | null>(null)
+  const [depenses,     setDepenses]     = usePersistedList<Depense>(STORAGE_KEY)
+  const [modalOpen,    setModalOpen]    = useState(false)
+  const [formError,    setFormError]    = useState('')
+  const [form,         setForm]         = useState({
+    description: '', categorie: 'Charges' as Categorie, montant: '', date: '',
+    statut: 'En attente' as Statut, fournisseur: '', notes: '',
+  })
 
-  const filtered = useMemo(() => MOCK_DEPENSES.filter(d => {
+  const openModal = () => {
+    setForm({ description: '', categorie: 'Charges', montant: '', date: new Date().toISOString().split('T')[0], statut: 'En attente', fournisseur: '', notes: '' })
+    setFormError('')
+    setModalOpen(true)
+  }
+
+  const handleAdd = (ev: React.FormEvent) => {
+    ev.preventDefault()
+    const montant = Number(form.montant)
+    if (!form.description.trim() || isNaN(montant) || montant <= 0) {
+      setFormError('Indiquez une description et un montant positif.')
+      return
+    }
+    const nouvelle: Depense = {
+      id: Date.now(),
+      description: form.description.trim(),
+      categorie: form.categorie,
+      montant,
+      date: form.date || new Date().toISOString().split('T')[0],
+      statut: form.statut,
+      fournisseur: form.fournisseur.trim() || '—',
+      reference: `DEP-${String(depenses.length + 1).padStart(4, '0')}`,
+      notes: form.notes.trim() || undefined,
+    }
+    setDepenses(prev => [nouvelle, ...prev])
+    setModalOpen(false)
+  }
+
+  const marquerPayee = (id: number) => {
+    setDepenses(prev => prev.map(d => (d.id === id ? { ...d, statut: 'Payée' as Statut } : d)))
+    setSelected(null)
+  }
+
+  const filtered = useMemo(() => depenses.filter(d => {
     const okSearch = d.description.toLowerCase().includes(search.toLowerCase()) ||
                      d.fournisseur.toLowerCase().includes(search.toLowerCase()) ||
                      d.reference.toLowerCase().includes(search.toLowerCase())
     const okCat    = filtreCat === 'Toutes' || d.categorie === filtreCat
     const okStatut = filtreStatut === 'Tous' || d.statut === filtreStatut
     return okSearch && okCat && okStatut
-  }), [search, filtreCat, filtreStatut])
+  }), [depenses, search, filtreCat, filtreStatut])
 
-  const totalDepenses = MOCK_DEPENSES.reduce((s, d) => s + d.montant, 0)
-  const totalEnRetard = MOCK_DEPENSES.filter(d => d.statut === 'En retard').reduce((s, d) => s + d.montant, 0)
-  const totalAttente  = MOCK_DEPENSES.filter(d => d.statut === 'En attente').reduce((s, d) => s + d.montant, 0)
-  const nbEnRetard    = MOCK_DEPENSES.filter(d => d.statut === 'En retard').length
+  const totalDepenses = depenses.reduce((s, d) => s + d.montant, 0)
+  const totalEnRetard = depenses.filter(d => d.statut === 'En retard').reduce((s, d) => s + d.montant, 0)
+  const totalAttente  = depenses.filter(d => d.statut === 'En attente').reduce((s, d) => s + d.montant, 0)
+  const nbEnRetard    = depenses.filter(d => d.statut === 'En retard').length
 
   const chartData = CATEGORIES.map(cat => ({
     name: cat,
-    montant: MOCK_DEPENSES.filter(d => d.categorie === cat).reduce((s, d) => s + d.montant, 0),
+    montant: depenses.filter(d => d.categorie === cat).reduce((s, d) => s + d.montant, 0),
     color: CAT_COLORS[cat],
   })).filter(d => d.montant > 0)
 
@@ -104,15 +128,11 @@ export default function DepensesPage() {
         <div>
           <h1 className="text-2xl font-bold">Dépenses</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>
-            Suivi et analyse de vos charges — Juillet–Août 2026
+            Suivi et analyse de vos charges
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium hover:opacity-80"
-            style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}>
-            <Download className="w-4 h-4" /> Exporter
-          </button>
-          <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+          <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
             style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
             <Plus className="w-4 h-4" /> Nouvelle dépense
           </button>
@@ -134,10 +154,10 @@ export default function DepensesPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total dépenses',     value: fmt(totalDepenses), sub: '15 transactions',  accent: false },
+          { label: 'Total dépenses',     value: fmt(totalDepenses), sub: `${depenses.length} dépense${depenses.length > 1 ? 's' : ''}`,  accent: false },
           { label: 'En retard',          value: fmt(totalEnRetard), sub: `${nbEnRetard} à régulariser`, accent: true },
-          { label: 'En attente',         value: fmt(totalAttente),  sub: `${MOCK_DEPENSES.filter(d => d.statut === 'En attente').length} à régler`, accent: false },
-          { label: 'Moy. / transaction', value: fmt(Math.round(totalDepenses / MOCK_DEPENSES.length)), sub: 'sur 15 transactions', accent: false },
+          { label: 'En attente',         value: fmt(totalAttente),  sub: `${depenses.filter(d => d.statut === 'En attente').length} à régler`, accent: false },
+          { label: 'Moy. / transaction', value: fmt(depenses.length ? Math.round(totalDepenses / depenses.length) : 0), sub: `sur ${depenses.length} dépense${depenses.length > 1 ? 's' : ''}`, accent: false },
         ].map((k, i) => (
           <div key={i} className="p-5 rounded-2xl border" style={{
             background:   k.accent ? 'rgba(239,68,68,0.06)' : 'var(--bg2)',
@@ -151,6 +171,7 @@ export default function DepensesPage() {
       </div>
 
       {/* BarChart */}
+      {chartData.length > 0 && (
       <div className="p-6 rounded-2xl border" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
         <h3 className="font-semibold mb-4">Répartition par catégorie</h3>
         <ResponsiveContainer width="100%" height={200}>
@@ -168,6 +189,7 @@ export default function DepensesPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      )}
 
       {/* Filtres */}
       <div className="flex flex-wrap items-center gap-3">
@@ -211,8 +233,18 @@ export default function DepensesPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
-        <table className="w-full">
+      {depenses.length === 0 && (
+        <div className="p-8 rounded-2xl border text-center" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+          <p className="text-sm mb-4" style={{ color: 'var(--text2)' }}>Aucune dépense enregistrée pour le moment.</p>
+          <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+            style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+            <Plus className="w-4 h-4" /> Ajouter une dépense
+          </button>
+        </div>
+      )}
+      {depenses.length > 0 && (
+      <div className="rounded-2xl border overflow-x-auto" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['Description', 'Catégorie', 'Fournisseur', 'Date', 'Montant', 'Statut'].map(h => (
@@ -224,7 +256,15 @@ export default function DepensesPage() {
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--text2)' }}>
-                  Aucune dépense trouvée
+                  {depenses.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <span>Aucune dépense enregistrée pour le moment.</span>
+                      <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+                        style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+                        <Plus className="w-4 h-4" /> Ajouter une dépense
+                      </button>
+                    </div>
+                  ) : 'Aucune dépense ne correspond aux filtres'}
                 </td>
               </tr>
             ) : filtered.map(dep => (
@@ -261,6 +301,8 @@ export default function DepensesPage() {
         </table>
       </div>
 
+      )}
+
       {/* Modal détail */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -296,17 +338,74 @@ export default function DepensesPage() {
                 </div>
               ))}
             </div>
-            <div className="flex gap-2 pt-2">
-              <button className="flex-1 py-2.5 rounded-xl text-sm font-medium hover:opacity-80 transition"
-                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
-                Modifier
-              </button>
-              <button className="flex-1 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110 transition"
-                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
-                Marquer payée
+            {selected.statut !== 'Payée' && (
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => marquerPayee(selected.id)} className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110 transition"
+                  style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+                  Marquer payée
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal nouvelle dépense */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setModalOpen(false)}>
+          <form onSubmit={handleAdd} className="w-full max-w-md rounded-3xl p-6 space-y-3 max-h-[90vh] overflow-y-auto"
+            style={{ background: 'var(--bg3)', border: '1px solid var(--border2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Nouvelle dépense</h3>
+              <button type="button" onClick={() => setModalOpen(false)} aria-label="Fermer"
+                className="p-2 rounded-xl hover:brightness-110" style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
+            {[
+              { label: 'Description *', key: 'description', type: 'text', placeholder: 'Ce que vous avez payé' },
+              { label: 'Montant (FCFA) *', key: 'montant', type: 'number', placeholder: 'Montant' },
+              { label: 'Fournisseur', key: 'fournisseur', type: 'text', placeholder: 'Nom du fournisseur' },
+              { label: 'Date', key: 'date', type: 'date', placeholder: '' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={form[f.key as 'description' | 'montant' | 'fournisseur' | 'date']}
+                  onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Catégorie</label>
+                <select value={form.categorie} onChange={e => setForm(p => ({ ...p, categorie: e.target.value as Categorie }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Statut</label>
+                <select value={form.statut} onChange={e => setForm(p => ({ ...p, statut: e.target.value as Statut }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                  {STATUTS.map(st => <option key={st} value={st}>{st}</option>)}
+                </select>
+              </div>
+            </div>
+            {formError && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>{formError}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setModalOpen(false)} className="flex-1 min-h-10 rounded-xl text-sm font-medium"
+                style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}>Annuler</button>
+              <button type="submit" className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>Enregistrer</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

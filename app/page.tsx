@@ -321,24 +321,33 @@ export default function HomePage() {
           </div>
           <div>
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--gold)" }}>Produit</p>
-            {["Fonctionnalités", "Tarifs", "Sécurité", "Mises à jour"].map((item) => (
-              <p key={item} className="text-sm mb-2" style={{ color: "var(--text2)" }}>
-                <Link href="#" className="inline-flex items-center min-h-9 min-w-10 hover:opacity-80 transition-opacity">{item}</Link>
+            {[
+              { label: "Fonctionnalités", href: "/#features" },
+              { label: "Tarifs", href: "/tarifs" },
+              { label: "Sécurité et données", href: "/confidentialite" },
+            ].map((item) => (
+              <p key={item.label} className="text-sm mb-2" style={{ color: "var(--text2)" }}>
+                <Link href={item.href} className="inline-flex items-center min-h-9 min-w-10 hover:opacity-80 transition-opacity">{item.label}</Link>
               </p>
             ))}
           </div>
           <div>
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--gold)" }}>Légal</p>
-            {["Conditions d'utilisation", "Politique de confidentialité", "Mentions légales", "RGPD"].map((item) => (
-              <p key={item} className="text-sm mb-2" style={{ color: "var(--text2)" }}>
-                <Link href="#" className="inline-flex items-center min-h-9 min-w-10 hover:opacity-80 transition-opacity">{item}</Link>
+            {[
+              { label: "Conditions d'utilisation", href: "/conditions" },
+              { label: "Politique de confidentialité", href: "/confidentialite" },
+              { label: "Mentions légales", href: "/mentions-legales" },
+            ].map((item) => (
+              <p key={item.label} className="text-sm mb-2" style={{ color: "var(--text2)" }}>
+                <Link href={item.href} className="inline-flex items-center min-h-9 min-w-10 hover:opacity-80 transition-opacity">{item.label}</Link>
               </p>
             ))}
           </div>
           <div>
             <p className="text-sm font-semibold mb-3" style={{ color: "var(--gold)" }}>Contact</p>
-            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>docompaore2@gmail.com</p>
-            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>+90 501 295 841</p>
+            <p className="text-sm mb-2" style={{ color: "var(--text2)" }}>
+              <a href="mailto:docompaore2@gmail.com" className="inline-flex items-center min-h-9 hover:opacity-80 transition-opacity">docompaore2@gmail.com</a>
+            </p>
             <div className="flex items-center gap-2 mt-3">
               <DollarSign className="w-4 h-4" style={{ color: "var(--cyan)" }} />
               <span className="text-xs" style={{ color: "var(--text2)" }}>FCFA · EUR · USD · XOF</span>

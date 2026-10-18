@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { usePersistedList } from '@/lib/store'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { TrendingUp, Plus, Search, X, ChevronDown, Download, ArrowUpRight } from 'lucide-react'
+import { TrendingUp, Plus, Search, X, ChevronDown } from 'lucide-react'
 
 type Source = 'Ventes' | 'Services' | 'Commissions' | 'Abonnements' | 'Projets' | 'Autres'
 type Statut = 'Encaisse' | 'En attente' | 'Partiel'
@@ -12,22 +13,7 @@ interface Revenu {
   montant: number; encaisse: number; date: string; statut: Statut
 }
 
-const MOCK: Revenu[] = [
-  { id: 1,  description: 'Abonnement clients — Juillet',      source: 'Abonnements', client: 'Clients recurrents',     montant: 625000, encaisse: 625000, date: '2026-07-01', statut: 'Encaisse' },
-  { id: 2,  description: 'Vente marchandises — Lot A',        source: 'Ventes',      client: 'Divers',                 montant: 485000, encaisse: 485000, date: '2026-07-03', statut: 'Encaisse' },
-  { id: 3,  description: 'Contrat prestation SI — phase 1',   source: 'Projets',     client: 'Ministere Agriculture',  montant: 850000, encaisse: 425000, date: '2026-07-05', statut: 'Partiel'  },
-  { id: 4,  description: 'Commission vente terrain Ouaga',    source: 'Commissions', client: 'SCI Patrimoniale BF',    montant: 180000, encaisse: 180000, date: '2026-07-08', statut: 'Encaisse' },
-  { id: 5,  description: 'Formation equipe commerciale',      source: 'Services',    client: 'Compaore & Associes',    montant: 220000, encaisse: 220000, date: '2026-07-10', statut: 'Encaisse' },
-  { id: 6,  description: 'Vente marchandises — Lot B',        source: 'Ventes',      client: 'Divers',                 montant: 310000, encaisse: 310000, date: '2026-07-14', statut: 'Encaisse' },
-  { id: 7,  description: 'Conseil juridique & fiscal',        source: 'Services',    client: 'Zongo Industries',       montant: 150000, encaisse: 0,      date: '2026-07-18', statut: 'En attente' },
-  { id: 8,  description: 'Abonnement SaaS annuel',            source: 'Abonnements', client: 'BRAFASO SARL',           montant: 360000, encaisse: 360000, date: '2026-07-20', statut: 'Encaisse' },
-  { id: 9,  description: 'Vente equipements bureautiques',    source: 'Ventes',      client: 'Mairie Ouagadougou',     montant: 275000, encaisse: 275000, date: '2026-07-22', statut: 'Encaisse' },
-  { id: 10, description: 'Commission recrutement cadres',     source: 'Commissions', client: 'Total Energies BF',      montant: 95000,  encaisse: 95000,  date: '2026-07-25', statut: 'Encaisse' },
-  { id: 11, description: 'Contrat maintenance informatique',  source: 'Projets',     client: 'ONATEL BF',              montant: 480000, encaisse: 480000, date: '2026-07-28', statut: 'Encaisse' },
-  { id: 12, description: 'Formation digital marketing',       source: 'Services',    client: 'PME Ouaga Cluster',      montant: 185000, encaisse: 0,      date: '2026-07-30', statut: 'En attente' },
-  { id: 13, description: 'Vente marchandises — Aout',         source: 'Ventes',      client: 'Divers',                 montant: 420000, encaisse: 420000, date: '2026-08-03', statut: 'Encaisse' },
-  { id: 14, description: 'Abonnement clients — Aout',        source: 'Abonnements', client: 'Clients recurrents',     montant: 625000, encaisse: 625000, date: '2026-08-05', statut: 'Encaisse' },
-]
+const STORAGE_KEY = 'comptrack_revenus'
 
 const SOURCES: Source[] = ['Ventes', 'Services', 'Commissions', 'Abonnements', 'Projets', 'Autres']
 const SRC_COLOR: Record<Source, string> = {
@@ -35,10 +21,23 @@ const SRC_COLOR: Record<Source, string> = {
   'Abonnements': '#10b981', 'Projets': '#F97316', 'Autres': '#64748b',
 }
 
-const TREND = [
-  { mois: 'Avr', total: 1820000 }, { mois: 'Mai', total: 2150000 },
-  { mois: 'Juin', total: 2580000 }, { mois: 'Juil', total: 4035000 }, { mois: 'Aout', total: 1045000 },
-]
+const MOIS_ABBR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+
+function tendance(revenus: Revenu[]): { mois: string; total: number }[] {
+  const now = new Date()
+  const result: { mois: string; total: number }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const total = revenus
+      .filter(r => {
+        const rd = new Date(r.date)
+        return rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth()
+      })
+      .reduce((s, r) => s + r.montant, 0)
+    result.push({ mois: MOIS_ABBR[d.getMonth()], total })
+  }
+  return result
+}
 
 const fmt  = (n: number) => n.toLocaleString('fr-FR') + ' FCFA'
 const fmtK = (n: number) => n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + ' M' : n >= 1_000 ? (n / 1_000).toFixed(0) + ' k' : String(n)
@@ -59,20 +58,52 @@ export default function RevenusPage() {
   const [search,   setSearch]   = useState('')
   const [filtreSrc, setFiltreSrc] = useState<Source | 'Toutes'>('Toutes')
   const [selected, setSelected] = useState<Revenu | null>(null)
+  const [revenus, setRevenus] = usePersistedList<Revenu>(STORAGE_KEY)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [form, setForm] = useState({
+    description: '', source: 'Ventes' as Source, client: '', montant: '', encaisse: '', date: '',
+  })
 
-  const filtered = useMemo(() => MOCK.filter(r => {
+  const openModal = () => {
+    setForm({ description: '', source: 'Ventes', client: '', montant: '', encaisse: '', date: new Date().toISOString().split('T')[0] })
+    setFormError('')
+    setModalOpen(true)
+  }
+
+  const handleAdd = (ev: React.FormEvent) => {
+    ev.preventDefault()
+    const montant = Number(form.montant)
+    const encaisse = form.encaisse.trim() === '' ? montant : Number(form.encaisse)
+    if (!form.description.trim() || isNaN(montant) || montant <= 0 || isNaN(encaisse) || encaisse < 0 || encaisse > montant) {
+      setFormError('Indiquez une description, un montant positif et un encaissé compris entre 0 et le montant.')
+      return
+    }
+    const statut: Statut = encaisse >= montant ? 'Encaisse' : encaisse > 0 ? 'Partiel' : 'En attente'
+    setRevenus(prev => [{
+      id: Date.now(), description: form.description.trim(), source: form.source,
+      client: form.client.trim() || '—', montant, encaisse,
+      date: form.date || new Date().toISOString().split('T')[0], statut,
+    }, ...prev])
+    setModalOpen(false)
+  }
+
+  const filtered = useMemo(() => revenus.filter(r => {
     const ok1 = r.description.toLowerCase().includes(search.toLowerCase()) || r.client.toLowerCase().includes(search.toLowerCase())
     const ok2 = filtreSrc === 'Toutes' || r.source === filtreSrc
     return ok1 && ok2
-  }), [search, filtreSrc])
+  }), [revenus, search, filtreSrc])
 
-  const total     = MOCK.reduce((s, r) => s + r.montant, 0)
-  const encaisse  = MOCK.reduce((s, r) => s + r.encaisse, 0)
+  const total     = revenus.reduce((s, r) => s + r.montant, 0)
+  const encaisse  = revenus.reduce((s, r) => s + r.encaisse, 0)
   const attente   = total - encaisse
-  const croissance = Math.round(((TREND[3].total - TREND[2].total) / TREND[2].total) * 100)
+  const trend = useMemo(() => tendance(revenus), [revenus])
+  const moisPrec = trend[trend.length - 2].total
+  const moisCour = trend[trend.length - 1].total
+  const croissance = moisPrec > 0 ? Math.round(((moisCour - moisPrec) / moisPrec) * 100) : null
 
   const bySource = SOURCES.map(src => ({
-    name: src, montant: MOCK.filter(r => r.source === src).reduce((s, r) => s + r.montant, 0), color: SRC_COLOR[src],
+    name: src, montant: revenus.filter(r => r.source === src).reduce((s, r) => s + r.montant, 0), color: SRC_COLOR[src],
   })).filter(d => d.montant > 0)
 
   return (
@@ -80,14 +111,10 @@ export default function RevenusPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Revenus</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>Suivi des encaissements — Juillet–Aout 2026</p>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>Suivi des encaissements</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium hover:opacity-80"
-            style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}>
-            <Download className="w-4 h-4" /> Exporter
-          </button>
-          <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
+          <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
             style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
             <Plus className="w-4 h-4" /> Nouveau revenu
           </button>
@@ -96,10 +123,10 @@ export default function RevenusPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total revenus',   value: fmt(total),    sub: `${MOCK.length} transactions`, color: 'var(--text)' },
-          { label: 'Encaisse',        value: fmt(encaisse), sub: `${MOCK.filter(r => r.statut === 'Encaisse').length} reglements`, color: '#10b981' },
-          { label: 'En attente',      value: fmt(attente),  sub: `${MOCK.filter(r => r.statut !== 'Encaisse').length} a encaisser`, color: '#D4AF37' },
-          { label: 'Croissance',      value: `+${croissance}%`, sub: 'vs mois precedent', color: '#10b981' },
+          { label: 'Total revenus',   value: fmt(total),    sub: `${revenus.length} transactions`, color: 'var(--text)' },
+          { label: 'Encaisse',        value: fmt(encaisse), sub: `${revenus.filter(r => r.statut === 'Encaisse').length} reglements`, color: '#10b981' },
+          { label: 'En attente',      value: fmt(attente),  sub: `${revenus.filter(r => r.statut !== 'Encaisse').length} a encaisser`, color: '#D4AF37' },
+          { label: 'Croissance',      value: croissance === null ? '—' : `${croissance > 0 ? '+' : ''}${croissance}%`, sub: 'vs mois precedent', color: croissance !== null && croissance < 0 ? '#ef4444' : '#10b981' },
         ].map((k, i) => (
           <div key={i} className="p-5 rounded-2xl border" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
             <p className="text-xs mb-2" style={{ color: 'var(--text2)' }}>{k.label}</p>
@@ -109,11 +136,12 @@ export default function RevenusPage() {
         ))}
       </div>
 
+      {revenus.length > 0 && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="p-6 rounded-2xl border" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
           <h3 className="font-semibold mb-4">Tendance mensuelle</h3>
           <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={TREND} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <AreaChart data={trend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor="#10b981" stopOpacity={0.3} />
@@ -146,6 +174,7 @@ export default function RevenusPage() {
           </ResponsiveContainer>
         </div>
       </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 flex-1 min-w-[200px] px-3 py-2 rounded-xl"
@@ -167,8 +196,18 @@ export default function RevenusPage() {
         <p className="text-sm ml-auto" style={{ color: 'var(--text2)' }}>{filtered.length} resultat{filtered.length > 1 ? 's' : ''}</p>
       </div>
 
-      <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
-        <table className="w-full">
+      {revenus.length === 0 && (
+        <div className="p-8 rounded-2xl border text-center" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+          <p className="text-sm mb-4" style={{ color: 'var(--text2)' }}>Aucun revenu enregistré pour le moment.</p>
+          <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+            style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+            <Plus className="w-4 h-4" /> Ajouter un revenu
+          </button>
+        </div>
+      )}
+      {revenus.length > 0 && (
+      <div className="rounded-2xl border overflow-x-auto" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['Description', 'Source', 'Client', 'Date', 'Montant', 'Statut'].map(h => (
@@ -177,6 +216,21 @@ export default function RevenusPage() {
             </tr>
           </thead>
           <tbody>
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--text2)' }}>
+                  {revenus.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <span>Aucun revenu enregistré pour le moment.</span>
+                      <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                        style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
+                        <Plus className="w-4 h-4" /> Ajouter un revenu
+                      </button>
+                    </div>
+                  ) : 'Aucun revenu ne correspond aux filtres'}
+                </td>
+              </tr>
+            )}
             {filtered.map(r => (
               <tr key={r.id} onClick={() => setSelected(r)}
                 className="hover:brightness-110 cursor-pointer transition-all"
@@ -207,6 +261,8 @@ export default function RevenusPage() {
           </tbody>
         </table>
       </div>
+
+      )}
 
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -242,16 +298,61 @@ export default function RevenusPage() {
               ))}
             </div>
             <div className="flex gap-2 pt-1">
-              <button onClick={() => setSelected(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium hover:opacity-80"
+              <button onClick={() => setSelected(null)} className="flex-1 min-h-10 rounded-xl text-sm font-medium hover:opacity-80"
                 style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text2)' }}>
                 Fermer
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
-                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>
-                <ArrowUpRight className="w-4 h-4" /> Voir facture
-              </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setModalOpen(false)}>
+          <form onSubmit={handleAdd} className="w-full max-w-md rounded-3xl p-6 space-y-3 max-h-[90vh] overflow-y-auto"
+            style={{ background: 'var(--bg3)', border: '1px solid var(--border2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Nouveau revenu</h3>
+              <button type="button" onClick={() => setModalOpen(false)} aria-label="Fermer"
+                className="p-2 rounded-xl hover:brightness-110" style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {[
+              { label: 'Description *', key: 'description', type: 'text', placeholder: 'Ce que vous avez vendu' },
+              { label: 'Client', key: 'client', type: 'text', placeholder: 'Nom du client' },
+              { label: 'Montant (FCFA) *', key: 'montant', type: 'number', placeholder: 'Montant total' },
+              { label: 'Déjà encaissé (FCFA)', key: 'encaisse', type: 'number', placeholder: 'Laisser vide si tout est encaissé' },
+              { label: 'Date', key: 'date', type: 'date', placeholder: '' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={form[f.key as 'description' | 'client' | 'montant' | 'encaisse' | 'date']}
+                  onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Source</label>
+              <select value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value as Source }))}
+                className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', color: 'var(--text)' }}>
+                {SOURCES.map(src => <option key={src} value={src}>{src}</option>)}
+              </select>
+            </div>
+            {formError && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>{formError}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setModalOpen(false)} className="flex-1 min-h-10 rounded-xl text-sm font-medium"
+                style={{ border: '1px solid var(--border2)', color: 'var(--text2)' }}>Annuler</button>
+              <button type="submit" className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                style={{ background: 'var(--gold)', color: 'var(--navy)' }}>Enregistrer</button>
+            </div>
+          </form>
         </div>
       )}
     </div>
