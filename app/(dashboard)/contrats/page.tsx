@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
+import { usePersistedList } from '@/lib/store'
 import { FileSignature, Plus, Search, X, CheckCircle, AlertTriangle, Clock, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { toast, Toaster } from 'sonner'
@@ -21,24 +22,19 @@ interface Contrat {
   montant: number; dateDebut: string; dateFin: string; statut: StatutContrat
 }
 
-const MOCK: Contrat[] = [
-  { id:1,  titre:'Contrat cadre distribution',     partie:'Saf-Cacao BF',          type:'Client',      montant:4500000,  dateDebut:'2026-01-01', dateFin:'2026-12-31', statut:'Actif' },
-  { id:2,  titre:'Approvisionnement marchandises',  partie:'CFAO Motors Burkina',   type:'Fournisseur', montant:2800000,  dateDebut:'2026-03-01', dateFin:'2027-02-28', statut:'Actif' },
-  { id:3,  titre:'Maintenance équipements',         partie:'Sonabel SA',            type:'Fournisseur', montant:840000,   dateDebut:'2025-07-01', dateFin:'2026-06-30', statut:'Expiré' },
-  { id:4,  titre:'Prestation conseil IT',           partie:'Ministère Commerce BF', type:'Client',      montant:3200000,  dateDebut:'2026-04-15', dateFin:'2026-10-14', statut:'Actif' },
-  { id:5,  titre:'Partenariat co-marketing',        partie:'Brakina SA',            type:'Partenaire',  montant:600000,   dateDebut:'2026-02-01', dateFin:'2026-07-31', statut:'En cours de renouvellement' },
-  { id:6,  titre:'Location entrepôt Kossodo',       partie:'Immobilier BF SAS',     type:'Fournisseur', montant:1800000,  dateDebut:'2025-09-01', dateFin:'2026-08-31', statut:'En cours de renouvellement' },
-  { id:7,  titre:'Fourniture matériel bureau',      partie:'Bolloré Logistics BF',  type:'Fournisseur', montant:450000,   dateDebut:'2026-05-01', dateFin:'2026-04-30', statut:'Suspendu' },
-  { id:8,  titre:'Distribution réseau national',    partie:'ONATEL SA',             type:'Client',      montant:7200000,  dateDebut:'2026-01-15', dateFin:'2027-01-14', statut:'Actif' },
-  { id:9,  titre:'Audit comptable annuel',          partie:'Cabinet Faso Conseil',  type:'Fournisseur', montant:980000,   dateDebut:'2026-01-01', dateFin:'2026-12-31', statut:'Actif' },
-  { id:10, titre:'Accord commercialisation',        partie:'Groupe Colgate BF',     type:'Client',      montant:5500000,  dateDebut:'2026-06-01', dateFin:'2027-05-31', statut:'Actif' },
-]
+const STORAGE_KEY = 'comptrack_contrats'
 
-const CHART_DATA = [
-  { mois:'Jan', valeur:8200000 }, { mois:'Fév', valeur:3400000 }, { mois:'Mar', valeur:11500000 },
-  { mois:'Avr', valeur:4200000 }, { mois:'Mai', valeur:6800000 }, { mois:'Jun', valeur:9100000 },
-  { mois:'Jul', valeur:7300000 }, { mois:'Aoû', valeur:2900000 },
-]
+const MOIS_ABBR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']
+
+function valeurParMois(contrats: Contrat[]): { mois: string; valeur: number }[] {
+  const annee = new Date().getFullYear()
+  const totaux = new Array<number>(12).fill(0)
+  for (const c of contrats) {
+    const d = new Date(c.dateDebut)
+    if (!isNaN(d.getTime()) && d.getFullYear() === annee) totaux[d.getMonth()] += c.montant
+  }
+  return MOIS_ABBR.map((mois, i) => ({ mois, valeur: totaux[i] }))
+}
 
 function statutMeta(s: StatutContrat): { background: string; color: string } {
   if (s === 'Actif')                      return { background:'rgba(34,197,94,0.12)',   color: C.green  }
@@ -59,7 +55,7 @@ function joursRestants(dateFin: string): number {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ContratsPage() {
-  const [list, setList]           = useState<Contrat[]>(MOCK)
+  const [list, setList]           = usePersistedList<Contrat>(STORAGE_KEY)
   const [search, setSearch]       = useState('')
   const [filterType, setFilterType] = useState<TypeContrat | 'Tous'>('Tous')
   const [modalOpen, setModalOpen] = useState(false)
@@ -82,6 +78,7 @@ export default function ContratsPage() {
   const nbActifs     = list.filter(c => c.statut === 'Actif').length
   const nbExpires    = list.filter(c => c.statut === 'Expiré').length
   const nbRenou      = list.filter(c => c.statut === 'En cours de renouvellement').length
+  const chartData    = useMemo(() => valeurParMois(list), [list])
 
   function handleAdd(ev: React.FormEvent) {
     ev.preventDefault()
@@ -127,7 +124,7 @@ export default function ContratsPage() {
       </div>
 
       {/* KPIs */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:16 }}>
         {[
           { label:'Valeur contrats actifs', value: formatMontant(valeurTotale), icon: TrendingUp,    color: C.gold  },
           { label:'Contrats actifs',        value: nbActifs,                    icon: CheckCircle,   color: C.green },
@@ -147,13 +144,13 @@ export default function ContratsPage() {
       </div>
 
       {/* Chart + Filters */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-        <div style={{ ...card, padding:20 }}>
-          <p style={{ fontWeight:600, fontSize:14, margin:'0 0 4px' }}>Valeur des contrats signés / mois</p>
-          <p style={{ fontSize:12, color: C.text2, margin:'0 0 16px' }}>2026 — FCFA</p>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:16 }}>
+        {list.length > 0 && <div style={{ ...card, padding:20 }}>
+          <p style={{ fontWeight:600, fontSize:14, margin:'0 0 4px' }}>Valeur des contrats par mois de début</p>
+          <p style={{ fontSize:12, color: C.text2, margin:'0 0 16px' }}>Par mois de début, année en cours — FCFA</p>
           {mounted ? (
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={CHART_DATA} margin={{ top:0, right:0, left:0, bottom:0 }}>
+              <BarChart data={chartData} margin={{ top:0, right:0, left:0, bottom:0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
                 <XAxis dataKey="mois" tick={{ fill: C.text2, fontSize:10 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: C.text2, fontSize:10 }} axisLine={false} tickLine={false}
@@ -169,7 +166,7 @@ export default function ContratsPage() {
           ) : (
             <div style={{ height:180, background: C.bg3, borderRadius:10 }} />
           )}
-        </div>
+        </div>}
 
         <div style={{ ...card, padding:20, display:'flex', flexDirection:'column', gap:12 }}>
           <p style={{ fontWeight:600, fontSize:14, margin:0 }}>Filtres</p>
@@ -217,7 +214,19 @@ export default function ContratsPage() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign:'center', padding:40, color: C.text2 }}>Aucun contrat trouvé</td></tr>
+                <tr><td colSpan={7} style={{ textAlign:'center', padding:40, color: C.text2 }}>
+                  {list.length === 0 ? (
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+                      <span>Aucun contrat enregistré pour le moment.</span>
+                      <button onClick={() => setModalOpen(true)} style={{
+                        display:'flex', alignItems:'center', gap:8, padding:'10px 18px', borderRadius:12,
+                        background: C.gold, color: C.navy, fontWeight:600, fontSize:13, border:'none', cursor:'pointer',
+                      }}>
+                        <Plus style={{ width:16, height:16 }} /> Ajouter un contrat
+                      </button>
+                    </div>
+                  ) : 'Aucun contrat ne correspond à la recherche'}
+                </td></tr>
               ) : filtered.map(c => {
                 const sm = statutMeta(c.statut)
                 const tm = typeMeta(c.type)
@@ -273,7 +282,7 @@ export default function ContratsPage() {
             <form onSubmit={handleAdd} style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div>
                 <label style={labelStyle}>Titre du contrat *</label>
-                <input value={form.titre} onChange={e => setForm(p=>({...p, titre:e.target.value}))} placeholder="Contrat cadre distribution" style={inputStyle} />
+                <input value={form.titre} onChange={e => setForm(p=>({...p, titre:e.target.value}))} placeholder="Intitulé du contrat" style={inputStyle} />
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <div>
@@ -289,7 +298,7 @@ export default function ContratsPage() {
               </div>
               <div>
                 <label style={labelStyle}>Montant FCFA *</label>
-                <input type="number" value={form.montant} onChange={e => setForm(p=>({...p, montant:e.target.value}))} placeholder="1500000" style={inputStyle} />
+                <input type="number" value={form.montant} onChange={e => setForm(p=>({...p, montant:e.target.value}))} placeholder="Montant en FCFA" style={inputStyle} />
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <div>

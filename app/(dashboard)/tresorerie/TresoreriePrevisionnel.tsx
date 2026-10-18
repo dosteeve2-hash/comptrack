@@ -10,7 +10,7 @@ export function MouvementsTable({ mouvements }: { mouvements: MouvementTresoreri
     <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
       <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
         <h3 className="font-semibold">Mouvements récents</h3>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>10 dernières opérations</p>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>10 dernières transactions validées</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -20,7 +20,7 @@ export function MouvementsTable({ mouvements }: { mouvements: MouvementTresoreri
               <th className="text-left px-4 py-3 text-xs font-medium">Libellé</th>
               <th className="text-right px-4 py-3 text-xs font-medium" style={{ color: 'var(--red)' }}>Débit</th>
               <th className="text-right px-4 py-3 text-xs font-medium" style={{ color: 'var(--green)' }}>Crédit</th>
-              <th className="text-right px-4 py-3 text-xs font-medium">Solde après</th>
+              <th className="text-right px-4 py-3 text-xs font-medium">Solde cumulé</th>
             </tr>
           </thead>
           <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
@@ -71,8 +71,8 @@ export function PrevisionnelSection({
   return (
     <div className="rounded-2xl border" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
       <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
-        <h3 className="font-semibold">Prévisionnel — Juillet 2025</h3>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>Estimation sur 30 jours</p>
+        <h3 className="font-semibold">Prévisionnel</h3>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text2)' }}>Factures à encaisser et dépenses à régler</p>
       </div>
       <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x" style={{ borderColor: 'var(--border)' }}>
         {/* Entrées */}
@@ -111,7 +111,7 @@ export function PrevisionnelSection({
       {/* Solde projeté */}
       <div className="px-6 py-4 border-t flex items-center justify-between"
         style={{ borderColor: 'var(--border)', background: 'var(--bg3)' }}>
-        <span className="text-sm font-semibold">Solde projeté fin juillet</span>
+        <span className="text-sm font-semibold">Solde projeté</span>
         <span className="font-bold font-mono text-lg"
           style={{ color: soldeProjecte >= 0 ? 'var(--green)' : 'var(--red)' }}>
           {fmt(soldeProjecte)}

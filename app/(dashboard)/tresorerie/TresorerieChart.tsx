@@ -56,7 +56,7 @@ export function ComptesBancairesRow({
           <p className="text-xl font-bold font-mono" style={{ color: c.solde >= 0 ? 'var(--text)' : 'var(--red)' }}>
             {fmt(c.solde)}
           </p>
-          <p className="text-xs font-mono" style={{ color: 'var(--text3)' }}>{c.numero}</p>
+          {c.numero && <p className="text-xs font-mono" style={{ color: 'var(--text3)' }}>{c.numero}</p>}
         </div>
       ))}
     </div>
@@ -79,7 +79,7 @@ export function TresorerieAreaChart({
         </div>
         <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--cyan)' }}>
           <span className="w-2 h-2 rounded-full" style={{ background: 'var(--cyan)' }} />
-          Solde quotidien
+          Solde cumulé des transactions
         </span>
       </div>
       {mounted ? (

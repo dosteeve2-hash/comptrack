@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo, useEffect, type CSSProperties } from 'react'
+import { usePersistedList } from '@/lib/store'
 import { Users, Plus, Search, X, Wallet, Award, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { toast, Toaster } from 'sonner'
@@ -21,27 +22,13 @@ interface Employe {
   dateEntree: string; telephone: string
 }
 
-const MOCK: Employe[] = [
-  { id:1, nom:'Ouédraogo Issouf',     poste:'Directeur commercial',  dept:'Commercial',    salaire:350000, contrat:'CDI',   statut:'Actif',   dateEntree:'2020-03-01', telephone:'+226 70 12 34 56' },
-  { id:2, nom:'Compaoré Aminata',     poste:'Comptable senior',      dept:'Finance',       salaire:280000, contrat:'CDI',   statut:'Actif',   dateEntree:'2021-07-15', telephone:'+226 76 23 45 67' },
-  { id:3, nom:'Kaboré Rasmané',       poste:'Technicien IT',         dept:'Informatique',  salaire:220000, contrat:'CDI',   statut:'Actif',   dateEntree:'2022-01-10', telephone:'+226 75 34 56 78' },
-  { id:4, nom:'Sawadogo Fatoumata',   poste:'Assistante RH',         dept:'RH',            salaire:185000, contrat:'CDD',   statut:'Actif',   dateEntree:'2023-06-01', telephone:'+226 70 45 67 89' },
-  { id:5, nom:'Zongo Bienvenu',       poste:'Commercial terrain',    dept:'Commercial',    salaire:195000, contrat:'CDI',   statut:'Actif',   dateEntree:'2022-09-15', telephone:'+226 76 56 78 90' },
-  { id:6, nom:'Tiendrébeogo Alice',   poste:'Développeuse web',      dept:'Informatique',  salaire:245000, contrat:'CDI',   statut:'Congé',   dateEntree:'2021-11-20', telephone:'+226 75 67 89 01' },
-  { id:7, nom:'Ouattara Mamadou',     poste:'Livreur',               dept:'Logistique',    salaire:120000, contrat:'CDD',   statut:'Actif',   dateEntree:'2024-01-15', telephone:'+226 70 78 90 12' },
-  { id:8, nom:'Diallo Mariam',        poste:'Secrétaire',            dept:'Administration',salaire:150000, contrat:'CDI',   statut:'Actif',   dateEntree:'2020-08-01', telephone:'+226 76 89 01 23' },
-  { id:9, nom:'Rouamba Théodore',     poste:'Responsable logistique',dept:'Logistique',    salaire:230000, contrat:'CDI',   statut:'Actif',   dateEntree:'2019-05-10', telephone:'+226 70 90 12 34' },
-  { id:10,nom:'Nana Sylvie',          poste:'Stagiaire marketing',   dept:'Commercial',    salaire:75000,  contrat:'Stage', statut:'Actif',   dateEntree:'2026-04-01', telephone:'+226 75 01 23 45' },
-]
+const STORAGE_KEY = 'comptrack_employes'
 
-const CHART_DATA = [
-  { dept:'Commercial',    total:620000 },
-  { dept:'Finance',       total:280000 },
-  { dept:'Info',          total:465000 },
-  { dept:'RH',            total:185000 },
-  { dept:'Logistique',    total:350000 },
-  { dept:'Admin',         total:150000 },
-]
+function masseParDept(employes: Employe[]): { dept: string; total: number }[] {
+  const totaux = new Map<string, number>()
+  for (const e of employes) totaux.set(e.dept, (totaux.get(e.dept) ?? 0) + e.salaire)
+  return Array.from(totaux, ([dept, total]) => ({ dept, total }))
+}
 
 function statutColor(s: Statut): CSSProperties {
   if (s === 'Actif')   return { background: 'rgba(34,197,94,0.12)',  color: C.green }
@@ -61,7 +48,7 @@ function initials(nom: string) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function EmployesPage() {
-  const [list, setList]         = useState<Employe[]>(MOCK)
+  const [list, setList]         = usePersistedList<Employe>(STORAGE_KEY)
   const [search, setSearch]     = useState('')
   const [filterDept, setFilterDept] = useState('Tous')
   const [modalOpen, setModalOpen]   = useState(false)
@@ -81,8 +68,9 @@ export default function EmployesPage() {
 
   const masseSalariale = list.reduce((s, e) => s + e.salaire, 0)
   const nbActifs       = list.filter(e => e.statut === 'Actif').length
-  const salaireMin     = Math.min(...list.map(e => e.salaire))
-  const salaireMax     = Math.max(...list.map(e => e.salaire))
+  const salaireMin     = list.length ? Math.min(...list.map(e => e.salaire)) : 0
+  const salaireMax     = list.length ? Math.max(...list.map(e => e.salaire)) : 0
+  const chartData      = useMemo(() => masseParDept(list), [list])
 
   function handleAdd(ev: React.FormEvent) {
     ev.preventDefault()
@@ -118,7 +106,7 @@ export default function EmployesPage() {
         <div>
           <h1 style={{ fontSize:22, fontWeight:700, margin:0 }}>Employés</h1>
           <p style={{ fontSize:13, color: C.text2, margin:'4px 0 0' }}>
-            {filtered.length} employé{filtered.length !== 1 ? 's' : ''} · Août 2026
+            {filtered.length} employé{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button onClick={() => setModalOpen(true)} style={{
@@ -130,12 +118,12 @@ export default function EmployesPage() {
       </div>
 
       {/* KPIs */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:16 }}>
         {[
           { label:'Total employés',    value: list.length,            icon: Users,      color: C.cyan  },
           { label:'Actifs',            value: nbActifs,               icon: Award,      color: C.green },
           { label:'Masse salariale',   value: formatMontant(masseSalariale), icon: Wallet, color: C.gold },
-          { label:'Fourchette',        value: `${(salaireMin/1000).toFixed(0)}k–${(salaireMax/1000).toFixed(0)}k FCFA`, icon: TrendingUp, color: C.amber },
+          { label:'Fourchette',        value: list.length ? `${(salaireMin/1000).toFixed(0)}k–${(salaireMax/1000).toFixed(0)}k FCFA` : '—', icon: TrendingUp, color: C.amber },
         ].map((k, i) => (
           <div key={i} style={{ ...card, padding:20 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
@@ -150,14 +138,14 @@ export default function EmployesPage() {
       </div>
 
       {/* Chart + Search */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:16 }}>
         {/* Chart */}
-        <div style={{ ...card, padding:20 }}>
+        {list.length > 0 && <div style={{ ...card, padding:20 }}>
           <p style={{ fontWeight:600, fontSize:14, margin:'0 0 4px' }}>Masse salariale par département</p>
           <p style={{ fontSize:12, color: C.text2, margin:'0 0 16px' }}>FCFA / mois</p>
           {mounted ? (
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={CHART_DATA} margin={{ top:0, right:0, left:0, bottom:0 }}>
+              <BarChart data={chartData} margin={{ top:0, right:0, left:0, bottom:0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
                 <XAxis dataKey="dept" tick={{ fill: C.text2, fontSize:10 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: C.text2, fontSize:10 }} axisLine={false} tickLine={false}
@@ -173,7 +161,7 @@ export default function EmployesPage() {
           ) : (
             <div style={{ height:180, background: C.bg3, borderRadius:10, animation:'pulse 2s infinite' }} />
           )}
-        </div>
+        </div>}
 
         {/* Filters */}
         <div style={{ ...card, padding:20, display:'flex', flexDirection:'column', gap:12 }}>
@@ -220,7 +208,19 @@ export default function EmployesPage() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign:'center', padding:40, color: C.text2 }}>Aucun employé trouvé</td></tr>
+                <tr><td colSpan={7} style={{ textAlign:'center', padding:40, color: C.text2 }}>
+                  {list.length === 0 ? (
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+                      <span>Aucun employé enregistré pour le moment.</span>
+                      <button onClick={() => setModalOpen(true)} style={{
+                        display:'flex', alignItems:'center', gap:8, padding:'10px 18px', borderRadius:12,
+                        background: C.gold, color: C.navy, fontWeight:600, fontSize:13, border:'none', cursor:'pointer',
+                      }}>
+                        <Plus style={{ width:16, height:16 }} /> Ajouter un employé
+                      </button>
+                    </div>
+                  ) : 'Aucun employé ne correspond à la recherche'}
+                </td></tr>
               ) : filtered.map(e => {
                 const sc = statutColor(e.statut)
                 const cc = contratColor(e.contrat)
@@ -268,12 +268,12 @@ export default function EmployesPage() {
             <form onSubmit={handleAdd} style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div>
                 <label style={labelStyle}>Nom complet *</label>
-                <input value={form.nom} onChange={e => setForm(p=>({...p, nom:e.target.value}))} placeholder="Koné Bakary" style={inputStyle} />
+                <input value={form.nom} onChange={e => setForm(p=>({...p, nom:e.target.value}))} placeholder="Prénom et nom" style={inputStyle} />
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <div>
                   <label style={labelStyle}>Poste *</label>
-                  <input value={form.poste} onChange={e => setForm(p=>({...p, poste:e.target.value}))} placeholder="Comptable" style={inputStyle} />
+                  <input value={form.poste} onChange={e => setForm(p=>({...p, poste:e.target.value}))} placeholder="Fonction" style={inputStyle} />
                 </div>
                 <div>
                   <label style={labelStyle}>Département</label>
@@ -285,7 +285,7 @@ export default function EmployesPage() {
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <div>
                   <label style={labelStyle}>Salaire FCFA *</label>
-                  <input type="number" value={form.salaire} onChange={e => setForm(p=>({...p, salaire:e.target.value}))} placeholder="180000" style={inputStyle} />
+                  <input type="number" value={form.salaire} onChange={e => setForm(p=>({...p, salaire:e.target.value}))} placeholder="Salaire mensuel" style={inputStyle} />
                 </div>
                 <div>
                   <label style={labelStyle}>Type de contrat</label>
@@ -296,7 +296,7 @@ export default function EmployesPage() {
               </div>
               <div>
                 <label style={labelStyle}>Téléphone</label>
-                <input value={form.telephone} onChange={e => setForm(p=>({...p, telephone:e.target.value}))} placeholder="+226 70 00 00 00" style={inputStyle} />
+                <input value={form.telephone} onChange={e => setForm(p=>({...p, telephone:e.target.value}))} placeholder="Numéro de téléphone" style={inputStyle} />
               </div>
               <div style={{ display:'flex', gap:10, marginTop:4 }}>
                 <button type="button" onClick={() => setModalOpen(false)} style={{

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, X, Edit2, AlertCircle, CheckCircle, TrendingDown } from "lucide-react";
+import { Wallet, X, Edit2, AlertCircle, CheckCircle, TrendingDown, Plus } from "lucide-react";
 import { usePersistedList } from "@/lib/store";
 import { formatMontant } from "@/lib/utils";
 
@@ -11,21 +11,9 @@ import { formatMontant } from "@/lib/utils";
 interface Enveloppe {
   id: string;
   categorie: string;
-  emoji: string;
   alloue: number;
   depense: number;
 }
-
-// ─── Données initiales (mock PME africaine) ───────────────────────────────────
-
-const ENVELOPPES_DEFAUT: Enveloppe[] = [
-  { id: "env_personnel",   categorie: "Personnel",   emoji: "👥", alloue: 1_500_000, depense: 1_050_000 },
-  { id: "env_marketing",   categorie: "Marketing",   emoji: "📣", alloue:   400_000, depense:   372_000 },
-  { id: "env_loyer",       categorie: "Loyer",       emoji: "🏠", alloue:   300_000, depense:   300_000 },
-  { id: "env_transport",   categorie: "Transport",   emoji: "🚗", alloue:   200_000, depense:   142_000 },
-  { id: "env_fournitures", categorie: "Fournitures", emoji: "📦", alloue:   150_000, depense:    78_000 },
-  { id: "env_autres",      categorie: "Autres",      emoji: "💼", alloue:   250_000, depense:   195_000 },
-];
 
 const STORAGE_KEY = "comptrack_budget_enveloppes";
 
@@ -82,21 +70,11 @@ function StatutPill({ p }: { p: number }) {
 const moisLabel = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" }).format(new Date());
 
 export default function BudgetPage() {
-  const [enveloppes, setEnveloppes, loaded] = usePersistedList<Enveloppe>(STORAGE_KEY);
-  const [seeded, setSeeded] = useState(false);
+  const [enveloppes, setEnveloppes] = usePersistedList<Enveloppe>(STORAGE_KEY);
+  const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Enveloppe | null>(null);
-  const [form, setForm] = useState({ alloue: "", depense: "" });
+  const [form, setForm] = useState({ categorie: "", alloue: "", depense: "" });
   const [formError, setFormError] = useState("");
-
-  // Seed données mock au premier chargement
-  useEffect(() => {
-    if (loaded && !seeded) {
-      setSeeded(true);
-      if (enveloppes.length === 0) {
-        setEnveloppes(ENVELOPPES_DEFAUT);
-      }
-    }
-  }, [loaded, seeded, enveloppes.length, setEnveloppes]);
 
   // ── Totaux ────────────────────────────────────────────────────────────────
   const totalAlloue  = enveloppes.reduce((s, e) => s + e.alloue, 0);
@@ -104,25 +82,44 @@ export default function BudgetPage() {
   const totalPct     = pct(totalDepense, totalAlloue);
 
   // ── Modal ─────────────────────────────────────────────────────────────────
+  const openCreate = () => {
+    setEditTarget(null);
+    setForm({ categorie: "", alloue: "", depense: "0" });
+    setFormError("");
+    setModalOpen(true);
+  };
+
   const openEdit = (e: Enveloppe) => {
     setEditTarget(e);
-    setForm({ alloue: String(e.alloue), depense: String(e.depense) });
+    setForm({ categorie: e.categorie, alloue: String(e.alloue), depense: String(e.depense) });
     setFormError("");
+    setModalOpen(true);
   };
+
+  const closeModal = () => setModalOpen(false);
 
   const handleSave = (ev: React.FormEvent) => {
     ev.preventDefault();
     setFormError("");
+    const categorie = form.categorie.trim();
     const alloue  = parseFloat(form.alloue.replace(/\s/g, ""));
     const depense = parseFloat(form.depense.replace(/\s/g, ""));
+    if (!categorie) {
+      setFormError("Donnez un nom à l'enveloppe.");
+      return;
+    }
     if (isNaN(alloue) || alloue < 0 || isNaN(depense) || depense < 0) {
       setFormError("Saisissez des montants positifs.");
       return;
     }
-    setEnveloppes((prev) =>
-      prev.map((e) => (e.id === editTarget!.id ? { ...e, alloue, depense } : e))
-    );
-    setEditTarget(null);
+    if (editTarget) {
+      setEnveloppes((prev) =>
+        prev.map((e) => (e.id === editTarget.id ? { ...e, categorie, alloue, depense } : e))
+      );
+    } else {
+      setEnveloppes((prev) => [...prev, { id: `env_${Date.now()}`, categorie, alloue, depense }]);
+    }
+    setModalOpen(false);
   };
 
   return (
@@ -136,15 +133,47 @@ export default function BudgetPage() {
         >
           <Wallet className="w-5 h-5" style={{ color: "var(--gold)" }} />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold">Enveloppes budgétaires</h1>
           <p className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
-            {moisLabel} · {enveloppes.length} catégories
+            {moisLabel} · {enveloppes.length} {enveloppes.length > 1 ? "enveloppes" : "enveloppe"}
           </p>
         </div>
+        {enveloppes.length > 0 && (
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 min-h-10 rounded-xl transition-all hover:brightness-110"
+            style={{ background: "var(--gold)", color: "var(--navy)" }}
+          >
+            <Plus className="w-4 h-4" />
+            Ajouter
+          </button>
+        )}
       </div>
 
+      {enveloppes.length === 0 && (
+        <div
+          className="p-8 rounded-2xl border text-center"
+          style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
+        >
+          <p className="text-base font-semibold mb-1">Aucune enveloppe pour le moment</p>
+          <p className="text-sm mb-5 mx-auto max-w-md" style={{ color: "var(--text2)" }}>
+            Une enveloppe fixe un plafond de dépenses pour une catégorie (loyer, transport, personnel…).
+            Créez la première avec vos propres montants.
+          </p>
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 min-h-10 rounded-xl transition-all hover:brightness-110"
+            style={{ background: "var(--gold)", color: "var(--navy)" }}
+          >
+            <Plus className="w-4 h-4" />
+            Ajouter une enveloppe
+          </button>
+        </div>
+      )}
+
       {/* ── Synthèse globale ─────────────────────────────────────────────────── */}
+      {enveloppes.length > 0 && (
       <div
         className="p-5 rounded-2xl border"
         style={{ background: "var(--bg2)", borderColor: "var(--border)" }}
@@ -182,6 +211,7 @@ export default function BudgetPage() {
           </span>
         </div>
       </div>
+      )}
 
       {/* ── Grille enveloppes ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -200,7 +230,6 @@ export default function BudgetPage() {
               {/* Top */}
               <div className="flex items-start justify-between mb-4 gap-2">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl leading-none">{env.emoji}</span>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
                       {env.categorie}
@@ -271,14 +300,14 @@ export default function BudgetPage() {
 
       {/* ── Modal Modifier budget ─────────────────────────────────────────────── */}
       <AnimatePresence>
-        {editTarget && (
+        {modalOpen && (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.72)" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={(e) => { if (e.target === e.currentTarget) setEditTarget(null); }}
+            onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
           >
             <motion.div
               className="w-full max-w-md rounded-2xl p-6"
@@ -290,10 +319,10 @@ export default function BudgetPage() {
             >
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-base font-bold">
-                  {editTarget.emoji} Modifier — {editTarget.categorie}
+                  {editTarget ? `Modifier — ${editTarget.categorie}` : "Nouvelle enveloppe"}
                 </h2>
                 <button
-                  onClick={() => setEditTarget(null)}
+                  onClick={closeModal}
                   className="p-1.5 rounded-lg transition-all hover:opacity-70"
                   style={{ color: "var(--text2)" }}
                 >
@@ -302,6 +331,25 @@ export default function BudgetPage() {
               </div>
 
               <form onSubmit={handleSave} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Nom de l&apos;enveloppe
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={60}
+                    value={form.categorie}
+                    onChange={(e) => setForm((p) => ({ ...p, categorie: e.target.value }))}
+                    placeholder="Ex. Transport"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm outline-none"
+                    style={{
+                      background: "var(--bg3)",
+                      border: "1px solid var(--border2)",
+                      color: "var(--text)",
+                    }}
+                    required
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">
                     Budget alloué (FCFA)
@@ -353,7 +401,7 @@ export default function BudgetPage() {
                 <div className="flex gap-3 pt-1">
                   <button
                     type="button"
-                    onClick={() => setEditTarget(null)}
+                    onClick={closeModal}
                     className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-70"
                     style={{ border: "1px solid var(--border2)", color: "var(--text2)" }}
                   >

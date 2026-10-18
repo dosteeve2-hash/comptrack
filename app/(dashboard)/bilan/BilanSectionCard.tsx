@@ -1,14 +1,16 @@
 // app/(dashboard)/bilan/BilanSectionCard.tsx
-import type { SectionBilan } from './bilan.data'
-import { sommeSec, fmt } from './bilan.data'
+import type { SectionBilan, ValeursBilan } from './bilan.data'
+import { sommeSec, montantPoste, fmt } from './bilan.data'
 
 interface SectionProps {
   section: SectionBilan
   exercice: 'N' | 'N1'
+  valeurs: ValeursBilan
+  onChange: (section: SectionBilan, label: string, exercice: 'N' | 'N1', montant: number) => void
 }
 
-export function BilanSectionCard({ section, exercice }: SectionProps) {
-  const total = sommeSec(section, exercice)
+export function BilanSectionCard({ section, exercice, valeurs, onChange }: SectionProps) {
+  const total = sommeSec(section, valeurs, exercice)
 
   return (
     <div className="rounded-2xl border overflow-hidden"
@@ -29,14 +31,29 @@ export function BilanSectionCard({ section, exercice }: SectionProps) {
       {/* Postes */}
       <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
         {section.postes.map((poste) => {
-          const montant = exercice === 'N' ? poste.montantN : poste.montantN1
+          const montant = montantPoste(valeurs, section, poste, exercice)
           const pct = total > 0 ? (montant / total) * 100 : 0
 
           return (
             <div key={poste.label} className="px-5 py-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm" style={{ color: 'var(--text2)' }}>{poste.label}</span>
-                <span className="text-sm font-medium tabular-nums">{fmt(montant)}</span>
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <label htmlFor={`${section.titre}-${poste.label}-${exercice}`} className="text-sm" style={{ color: 'var(--text2)' }}>
+                  {poste.label}
+                </label>
+                <input
+                  id={`${section.titre}-${poste.label}-${exercice}`}
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={montant === 0 ? '' : montant}
+                  placeholder="0"
+                  onChange={(e) => {
+                    const v = Number(e.target.value)
+                    onChange(section, poste.label, exercice, isNaN(v) || v < 0 ? 0 : v)
+                  }}
+                  className="w-36 px-3 min-h-9 rounded-lg text-sm text-right tabular-nums outline-none"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border2)', color: 'var(--text)' }}
+                />
               </div>
               {/* Barre de proportion */}
               <div className="h-1 rounded-full" style={{ background: 'var(--bg3)' }}>

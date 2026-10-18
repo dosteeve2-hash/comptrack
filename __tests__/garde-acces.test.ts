@@ -7,7 +7,7 @@ const SANS_SUPABASE = { configure: false }
 
 describe('estPublic', () => {
   it('ouvre la vitrine et les pages de connexion', () => {
-    for (const c of ['/', '/tarifs', '/connexion', '/inscription', '/auth/callback'])
+    for (const c of ['/', '/tarifs', '/connexion', '/inscription', '/auth/callback', '/mentions-legales', '/confidentialite', '/conditions'])
       expect(estPublic(c), c).toBe(true)
   })
 

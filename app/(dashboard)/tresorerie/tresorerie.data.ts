@@ -1,4 +1,8 @@
 // app/(dashboard)/tresorerie/tresorerie.data.ts
+// Aucune donnée d'exemple : tout est calculé à partir de ce que l'utilisateur a saisi
+// (comptes, transactions, factures, dépenses).
+
+import type { Facture, Transaction } from '@/lib/data'
 
 export interface CompteBancaire {
   id: string
@@ -28,53 +32,81 @@ export interface PrevisionMensuel {
   type: 'entree' | 'sortie'
 }
 
-export const comptesBancaires: CompteBancaire[] = [
-  { id: 'coris',   banque: 'Coris Bank International', numero: 'BF062 01234 56789 0', solde:  6_800_000, couleur: 'var(--gold)'  },
-  { id: 'uba',     banque: 'UBA Burkina Faso',         numero: 'BF062 09876 54321 0', solde:  2_150_000, couleur: 'var(--cyan)'  },
-  { id: 'ecobank', banque: 'Ecobank Burkina',          numero: 'BF062 05555 11111 0', solde: -100_000,   couleur: 'var(--amber)' },
-]
+export interface DepenseAPayer {
+  description: string
+  montant: number
+  statut: string
+}
 
-export const mouvementsRecents: MouvementTresorerie[] = [
-  { date: '2025-06-30', libelle: 'Vente marchandises — Famille Sawadogo',        debit: 0,         credit: 1_250_000, soldeApres: 6_800_000, type: 'credit' },
-  { date: '2025-06-29', libelle: 'Règlement fournisseur SCIMA-BF',               debit: 750_000,   credit: 0,         soldeApres: 5_550_000, type: 'debit'  },
-  { date: '2025-06-27', libelle: 'Loyer mensuel — Quartier Gounghin',            debit: 320_000,   credit: 0,         soldeApres: 6_300_000, type: 'debit'  },
-  { date: '2025-06-26', libelle: 'Virement client — Entreprise Kaboré',          debit: 0,         credit: 2_100_000, soldeApres: 6_620_000, type: 'credit' },
-  { date: '2025-06-25', libelle: 'Salaires — Juin 2025',                         debit: 1_800_000, credit: 0,         soldeApres: 4_520_000, type: 'debit'  },
-  { date: '2025-06-23', libelle: 'Vente comptoir — Clientèle diverse',           debit: 0,         credit: 680_000,   soldeApres: 6_320_000, type: 'credit' },
-  { date: '2025-06-20', libelle: 'Cotisations CNSS/CNAMGS',                      debit: 420_000,   credit: 0,         soldeApres: 5_640_000, type: 'debit'  },
-  { date: '2025-06-18', libelle: 'Encaissement facture FA-2025-089',             debit: 0,         credit: 950_000,   soldeApres: 6_060_000, type: 'credit' },
-  { date: '2025-06-15', libelle: 'Remboursement emprunt BF — tranche mensuelle', debit: 350_000,   credit: 0,         soldeApres: 5_110_000, type: 'debit'  },
-  { date: '2025-06-12', libelle: 'Facture téléphonie & internet',                debit: 85_000,    credit: 0,         soldeApres: 5_460_000, type: 'debit'  },
-]
+export const COMPTES_KEY = 'comptrack_comptes'
+export const SEUIL_KEY = 'comptrack_seuil_alerte'
 
-export function genererSoldeQuotidien(): DonneeJournaliere[] {
+export const COULEURS_COMPTES = ['var(--gold)', 'var(--cyan)', 'var(--amber)', 'var(--green)']
+
+function transactionsValides(transactions: Transaction[]): Transaction[] {
+  return transactions
+    .filter((t) => t.statut === 'validee')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+}
+
+function signe(t: Transaction): number {
+  return t.type === 'revenu' ? t.montant : -t.montant
+}
+
+/** Solde cumulé après chaque transaction validée, les 10 plus récentes en premier. */
+export function construireMouvements(transactions: Transaction[]): MouvementTresorerie[] {
+  let cumul = 0
+  const tous = transactionsValides(transactions).map((t) => {
+    cumul += signe(t)
+    return {
+      date: t.date,
+      libelle: t.description || t.categorie,
+      debit: t.type === 'depense' ? t.montant : 0,
+      credit: t.type === 'revenu' ? t.montant : 0,
+      soldeApres: cumul,
+      type: t.type === 'revenu' ? ('credit' as const) : ('debit' as const),
+    }
+  })
+  return tous.slice(-10).reverse()
+}
+
+/** Solde cumulé des transactions validées, jour par jour sur les `jours` derniers jours. */
+export function soldeQuotidien(transactions: Transaction[], jours = 90): DonneeJournaliere[] {
+  const valides = transactionsValides(transactions)
+  if (valides.length === 0) return []
+  const fin = new Date()
+  fin.setHours(0, 0, 0, 0)
+  const debut = new Date(fin)
+  debut.setDate(fin.getDate() - (jours - 1))
+
+  let cumul = valides
+    .filter((t) => new Date(t.date).getTime() < debut.getTime())
+    .reduce((s, t) => s + signe(t), 0)
+
   const data: DonneeJournaliere[] = []
-  let solde = 4_200_000
-  const debut = new Date('2025-04-01')
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < jours; i++) {
     const d = new Date(debut)
     d.setDate(debut.getDate() + i)
-    const variation = (Math.random() - 0.42) * 600_000
-    solde = Math.max(500_000, solde + variation)
-    data.push({ date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), solde: Math.round(solde) })
+    const cle = d.toDateString()
+    cumul += valides.filter((t) => new Date(t.date).toDateString() === cle).reduce((s, t) => s + signe(t), 0)
+    data.push({ date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }), solde: Math.round(cumul) })
   }
-  data[data.length - 1].solde = 8_850_000
   return data
 }
 
-export const previsionsEntrees: PrevisionMensuel[] = [
-  { libelle: 'Ventes prévisionnelles juillet', montant: 9_500_000, type: 'entree' },
-  { libelle: 'Règlement créances clients',     montant: 3_200_000, type: 'entree' },
-  { libelle: 'Remboursement TVA',              montant: 450_000,   type: 'entree' },
-]
+/** Entrées attendues : factures émises et pas encore payées. */
+export function previsionsEntrees(factures: Facture[]): PrevisionMensuel[] {
+  return factures
+    .filter((f) => f.statut === 'envoyee' || f.statut === 'en_attente' || f.statut === 'retard')
+    .map((f) => ({ libelle: `Facture ${f.numero} — ${f.client}`, montant: f.montant, type: 'entree' as const }))
+}
 
-export const previsionsSorties: PrevisionMensuel[] = [
-  { libelle: 'Salaires juillet',               montant: 1_800_000, type: 'sortie' },
-  { libelle: 'Fournisseurs SCIMA-BF & autres', montant: 4_100_000, type: 'sortie' },
-  { libelle: 'Loyers & charges locatives',     montant: 320_000,   type: 'sortie' },
-  { libelle: 'Remboursement emprunt',          montant: 350_000,   type: 'sortie' },
-  { libelle: 'Charges fiscales & sociales',    montant: 780_000,   type: 'sortie' },
-]
+/** Sorties attendues : dépenses saisies comme « en attente » ou « en retard ». */
+export function previsionsSorties(depenses: DepenseAPayer[]): PrevisionMensuel[] {
+  return depenses
+    .filter((d) => d.statut === 'En attente' || d.statut === 'En retard')
+    .map((d) => ({ libelle: d.description, montant: d.montant, type: 'sortie' as const }))
+}
 
 export function fmt(n: number): string {
   return new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'

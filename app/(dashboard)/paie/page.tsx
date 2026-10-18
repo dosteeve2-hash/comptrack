@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
+import { usePersistedList } from '@/lib/store'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts'
@@ -32,7 +34,6 @@ interface LignePaie {
   cnssPatronal: number  // 16% brut
   anciennete: number    // annees
   statut: StatutPaie
-  ribBanque: string
 }
 
 // ─── Calculs BF ──────────────────────────────────────────────────────────────
@@ -50,33 +51,39 @@ function calculerIUTS(brut: number): number {
 
 function buildLigne(
   id: number, nom: string, poste: string, dept: string,
-  salaireBrut: number, anciennete: number, statut: StatutPaie, ribBanque: string,
+  salaireBrut: number, anciennete: number, statut: StatutPaie,
 ): LignePaie {
   const cnssEmploye  = Math.round(salaireBrut * 0.055)
   const cnssPatronal = Math.round(salaireBrut * 0.16)
   const iuts         = Math.round(calculerIUTS(salaireBrut))
   const netAPayer    = salaireBrut - cnssEmploye - iuts
-  return { id, nom, poste, dept, salaireBrut, cnssEmploye, iuts, netAPayer, cnssPatronal, anciennete, statut, ribBanque }
+  return { id, nom, poste, dept, salaireBrut, cnssEmploye, iuts, netAPayer, cnssPatronal, anciennete, statut }
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const EMPLOYEES: LignePaie[] = [
-  buildLigne(1, 'Adama Ouedraogo',  'Directeur Général',         'Direction',    850_000, 12, 'Payé',       'SGBF-BF-0002-01234'),
-  buildLigne(2, 'Mariam Kone',      'Directrice Financière',     'Finance',      620_000,  8, 'Payé',       'BICIA-BF-0001-56789'),
-  buildLigne(3, 'Seydou Tapsoba',   'Resp. Commercial',          'Commercial',   480_000,  6, 'Payé',       'CORIS-BF-0003-11223'),
-  buildLigne(4, 'Aissata Zongo',    'Comptable Senior',          'Finance',      380_000,  5, 'Payé',       'SGBF-BF-0002-44556'),
-  buildLigne(5, 'Boukaré Belem',    'Ingénieur Logiciel',        'IT',           450_000,  4, 'Payé',       'BICIA-BF-0001-77889'),
-  buildLigne(6, 'Fatoumata Barry',  'Assistante RH',             'RH',           280_000,  3, 'Payé',       'CORIS-BF-0003-00112'),
-  buildLigne(7, 'Ibrahim Traore',   'Commercial Junior',         'Commercial',   240_000,  2, 'En attente', 'SGBF-BF-0002-33445'),
-  buildLigne(8, 'Rasmata Compaore', 'Chargée de Communication',  'Marketing',    310_000,  3, 'Payé',       'BICIA-BF-0001-66778'),
-  buildLigne(9, 'Oumar Diallo',     'Technicien Support',        'IT',           260_000,  2, 'En attente', 'CORIS-BF-0003-99001'),
-  buildLigne(10,'Balkissa Ouattara','Juriste',                   'Direction',    420_000,  5, 'Bloqué',     'SGBF-BF-0002-22334'),
-]
+// ─── Source : la liste des employés (page Employés) ──────────────────────────
+interface EmployeStocke {
+  id: number; nom: string; poste: string; dept: string; salaire: number; dateEntree: string
+}
 
-const MOIS_OPTIONS = [
-  'Janvier 2026', 'Février 2026', 'Mars 2026', 'Avril 2026',
-  'Mai 2026', 'Juin 2026', 'Juillet 2026', 'Août 2026',
-]
+const EMPLOYES_KEY = 'comptrack_employes'
+const PAIE_KEY = 'comptrack_paie_payes'
+
+interface PaiePayee { cle: string }
+
+function anciennete(dateEntree: string): number {
+  const d = new Date(dateEntree)
+  if (isNaN(d.getTime())) return 0
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / (365.25 * 86400000)))
+}
+
+function moisOptions(): string[] {
+  const annee = new Date().getFullYear()
+  const fmt = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' })
+  return Array.from({ length: 12 }, (_, i) => {
+    const t = fmt.format(new Date(annee, i, 1))
+    return t.charAt(0).toUpperCase() + t.slice(1)
+  })
+}
 
 const DEPT_COLORS: Record<string, string> = {
   Direction: C.gold, Finance: C.cyan, Commercial: C.green,
@@ -113,8 +120,8 @@ function KpiCard({ label, value, sub, color, icon: Icon }:
   )
 }
 
-function ModalBulletin({ ligne, mois, onClose }:
-  { ligne: LignePaie; mois: string; onClose: () => void }) {
+function ModalBulletin({ ligne, mois, onClose, onTogglePaye }:
+  { ligne: LignePaie; mois: string; onClose: () => void; onTogglePaye: () => void }) {
   const rows: [string, string, string][] = [
     // [libellé, base/taux, montant]
     ['Salaire de base',            '',       formatMontant(ligne.salaireBrut)],
@@ -148,10 +155,8 @@ function ModalBulletin({ ligne, mois, onClose }:
           display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
           {[
             ['Période', mois],
-            ['Établissement', 'FORGE Afrika · RCCM BF-OHG-01-2024'],
             ['N° matricule', `EMP-${String(ligne.id).padStart(4,'0')}`],
             ['Ancienneté', `${ligne.anciennete} an${ligne.anciennete > 1 ? 's' : ''}`],
-            ['Banque / RIB', ligne.ribBanque],
             ['Statut', <StatutBadge key="s" s={ligne.statut} />],
           ].map(([k, v], i) => (
             <div key={i}>
@@ -199,6 +204,11 @@ function ModalBulletin({ ligne, mois, onClose }:
               padding:'8px 16px', fontSize:12, cursor:'pointer', fontWeight:600 }}>
             <Download size={13} /> Exporter PDF
           </button>
+          <button onClick={onTogglePaye}
+            style={{ background:`${C.green}18`, color:C.green, border:`1px solid ${C.green}40`, borderRadius:8,
+              padding:'8px 16px', fontSize:12, cursor:'pointer', fontWeight:600 }}>
+            {ligne.statut === 'Payé' ? 'Marquer non payé' : 'Marquer payé'}
+          </button>
           <button onClick={onClose}
             style={{ background:C.gold, color:C.navy, border:'none', borderRadius:8,
               padding:'8px 16px', fontSize:12, cursor:'pointer', fontWeight:700 }}>
@@ -212,28 +222,44 @@ function ModalBulletin({ ligne, mois, onClose }:
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function PaiePage() {
-  const [mois, setMois]       = useState('Août 2026')
-  const [selected, setSelected] = useState<LignePaie | null>(null)
+  const options = useMemo(() => moisOptions(), [])
+  const [mois, setMois]       = useState(() => options[new Date().getMonth()])
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [filterDept, setFilterDept] = useState('Tous')
+  const [employes] = usePersistedList<EmployeStocke>(EMPLOYES_KEY)
+  const [payes, setPayes] = usePersistedList<PaiePayee>(PAIE_KEY)
 
-  const depts = useMemo(() => ['Tous', ...Array.from(new Set(EMPLOYEES.map(e => e.dept)))], [])
+  const EMPLOYEES = useMemo<LignePaie[]>(() => employes.map(e => buildLigne(
+    e.id, e.nom, e.poste, e.dept, e.salaire, anciennete(e.dateEntree),
+    payes.some(p => p.cle === `${mois}:${e.id}`) ? 'Payé' : 'En attente',
+  )), [employes, payes, mois])
+
+  const selected = EMPLOYEES.find(e => e.id === selectedId) ?? null
+  const setSelected = (l: LignePaie | null) => setSelectedId(l ? l.id : null)
+
+  const togglePaye = (id: number) => {
+    const cle = `${mois}:${id}`
+    setPayes(prev => (prev.some(p => p.cle === cle) ? prev.filter(p => p.cle !== cle) : [...prev, { cle }]))
+  }
+
+  const depts = useMemo(() => ['Tous', ...Array.from(new Set(EMPLOYEES.map(e => e.dept)))], [EMPLOYEES])
 
   const filtered = useMemo(() =>
     EMPLOYEES.filter(e => filterDept === 'Tous' || e.dept === filterDept),
-  [filterDept])
+  [EMPLOYEES, filterDept])
 
   /* KPIs */
-  const masseSalariale = useMemo(() => EMPLOYEES.reduce((s, e) => s + e.salaireBrut, 0), [])
-  const chargesPatronal = useMemo(() => EMPLOYEES.reduce((s, e) => s + e.cnssPatronal, 0), [])
-  const salaireMoyen   = useMemo(() => Math.round(masseSalariale / EMPLOYEES.length), [masseSalariale])
-  const paye           = useMemo(() => EMPLOYEES.filter(e => e.statut === 'Payé').length, [])
+  const masseSalariale = useMemo(() => EMPLOYEES.reduce((s, e) => s + e.salaireBrut, 0), [EMPLOYEES])
+  const chargesPatronal = useMemo(() => EMPLOYEES.reduce((s, e) => s + e.cnssPatronal, 0), [EMPLOYEES])
+  const salaireMoyen   = useMemo(() => EMPLOYEES.length ? Math.round(masseSalariale / EMPLOYEES.length) : 0, [masseSalariale, EMPLOYEES])
+  const paye           = useMemo(() => EMPLOYEES.filter(e => e.statut === 'Payé').length, [EMPLOYEES])
 
   /* Données chart par département */
   const chartData = useMemo(() => {
     const map: Record<string, number> = {}
     EMPLOYEES.forEach(e => { map[e.dept] = (map[e.dept] || 0) + e.salaireBrut })
     return Object.entries(map).map(([dept, total]) => ({ dept, total })).sort((a, b) => b.total - a.total)
-  }, [])
+  }, [EMPLOYEES])
 
   const th: React.CSSProperties = { padding:'10px 16px', textAlign:'left', fontSize:11, color:C.text3,
     fontWeight:600, borderBottom:`1px solid ${C.border}`, background:C.bg3, whiteSpace:'nowrap' as const }
@@ -261,7 +287,7 @@ export default function PaiePage() {
           <select value={mois} onChange={e => setMois(e.target.value)}
             style={{ background:C.bg2, border:`1px solid ${C.border}`, color:C.text,
               borderRadius:8, padding:'8px 14px', fontSize:13, outline:'none', cursor:'pointer' }}>
-            {MOIS_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+            {options.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
           <button onClick={() => toast.success('Export fiche de paie globale — bientot disponible')}
             style={{ display:'flex', alignItems:'center', gap:7, background:C.gold, color:C.navy,
@@ -272,13 +298,27 @@ export default function PaiePage() {
       </div>
 
       {/* KPIs */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:14 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:14 }}>
         <KpiCard label="Masse salariale"  value={formatMontant(masseSalariale)} sub={`${EMPLOYEES.length} employes · brut`}    color={C.gold}   icon={Banknote}    />
         <KpiCard label="Charges patronales" value={formatMontant(chargesPatronal)} sub="CNSS employeur 16%"                    color={C.red}    icon={TrendingUp}  />
         <KpiCard label="Salaire moyen"    value={formatMontant(salaireMoyen)}    sub="brut mensuel"                            color={C.cyan}   icon={Users}       />
         <KpiCard label="Payes ce mois"    value={`${paye} / ${EMPLOYEES.length}`} sub="bulletins valides"                     color={C.green}  icon={CheckCircle} />
       </div>
 
+      {EMPLOYEES.length === 0 && (
+        <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:14, padding:32, textAlign:'center' as const }}>
+          <p style={{ fontSize:15, fontWeight:600, color:C.text, margin:'0 0 6px' }}>Aucun employé pour le moment</p>
+          <p style={{ fontSize:13, color:C.text2, margin:'0 auto 18px', maxWidth:440 }}>
+            Les bulletins sont calculés à partir de la liste de vos employés. Ajoutez-les d&apos;abord, la paie du mois apparaîtra ici.
+          </p>
+          <Link href="/employes" style={{ display:'inline-flex', alignItems:'center', minHeight:40, background:C.gold, color:C.navy,
+            borderRadius:10, padding:'0 18px', fontWeight:700, fontSize:13, textDecoration:'none' }}>
+            Ajouter un employé
+          </Link>
+        </div>
+      )}
+
+      {EMPLOYEES.length > 0 && (<>
       {/* BarChart */}
       <div style={{ background:C.bg2, border:`1px solid ${C.border}`, borderRadius:14, padding:24 }}>
         <h3 style={{ fontSize:13, fontWeight:600, color:C.text, margin:'0 0 16px' }}>
@@ -370,7 +410,9 @@ export default function PaiePage() {
         </div>
       </div>
 
-      {selected && <ModalBulletin ligne={selected} mois={mois} onClose={() => setSelected(null)} />}
+      </>)}
+
+      {selected && <ModalBulletin ligne={selected} mois={mois} onClose={() => setSelected(null)} onTogglePaye={() => togglePaye(selected.id)} />}
     </div>
   )
 }

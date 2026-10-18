@@ -6,7 +6,9 @@
 // personne ne s'en apercevrait. Ici une page oubliée est simplement protégée.
 
 /** Chemins publics exacts. */
-const PUBLICS_EXACTS = new Set(['/', '/tarifs', '/connexion', '/inscription'])
+const PUBLICS_EXACTS = new Set([
+  '/', '/tarifs', '/connexion', '/inscription', '/mentions-legales', '/confidentialite', '/conditions',
+])
 
 /** Préfixes publics : tout ce qui commence par là, séparateur compris. */
 const PUBLICS_PREFIXES = ['/auth/']

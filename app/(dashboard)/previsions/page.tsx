@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { computeDonneesMensuelles, usePersistedList, useTransactions } from "@/lib/store";
 import { motion } from "framer-motion";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -8,7 +10,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
-  Gauge, ArrowRight, Calendar, Wallet,
+  Gauge, Calendar, Wallet,
 } from "lucide-react";
 
 // ─── Constantes de style ────────────────────────────────────────────────────
@@ -18,21 +20,8 @@ const GREEN  = "#10B981";
 const RED    = "#EF4444";
 const ORANGE = "#F59E0B";
 
-// ─── Données historiques (12 derniers mois) ─────────────────────────────────
-const HISTORIQUE = [
-  { mois: "Aoû 25", revenus: 2_850_000, depenses: 1_420_000 },
-  { mois: "Sep 25", revenus: 3_120_000, depenses: 1_680_000 },
-  { mois: "Oct 25", revenus: 2_960_000, depenses: 1_540_000 },
-  { mois: "Nov 25", revenus: 3_480_000, depenses: 1_920_000 },
-  { mois: "Déc 25", revenus: 4_250_000, depenses: 2_100_000 },
-  { mois: "Jan 26", revenus: 2_680_000, depenses: 1_380_000 },
-  { mois: "Fév 26", revenus: 2_940_000, depenses: 1_560_000 },
-  { mois: "Mar 26", revenus: 3_200_000, depenses: 1_640_000 },
-  { mois: "Avr 26", revenus: 3_560_000, depenses: 1_780_000 },
-  { mois: "Mai 26", revenus: 3_890_000, depenses: 1_950_000 },
-  { mois: "Jun 26", revenus: 4_100_000, depenses: 2_050_000 },
-  { mois: "Jul 26", revenus: 3_750_000, depenses: 1_820_000 },
-];
+interface Historique { mois: string; revenus: number; depenses: number }
+interface CompteSolde { solde: number }
 
 // ─── Scénarios de croissance ────────────────────────────────────────────────
 const SCENARIOS = [
@@ -41,19 +30,27 @@ const SCENARIOS = [
   { id: "optimiste",  label: "Optimiste",   revCroiss: 0.09,  depCroiss: 0.01,  color: GREEN  },
 ];
 
-const MOIS_FUTURS = ["Aoû 26", "Sep 26", "Oct 26", "Nov 26", "Déc 26", "Jan 27"];
+function moisFuturs(): string[] {
+  const now = new Date();
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + 1 + i, 1);
+    const m = new Intl.DateTimeFormat("fr-FR", { month: "short" }).format(d).replace(".", "");
+    return `${m.charAt(0).toUpperCase()}${m.slice(1)} ${String(d.getFullYear()).slice(2)}`;
+  });
+}
 
 // ─── Utilitaires ────────────────────────────────────────────────────────────
 function fcfa(n: number) {
   return new Intl.NumberFormat("fr-FR").format(Math.round(n)) + " FCFA";
 }
 
-function projeter(scenarioId: string, tresoActuelle: number) {
+function projeter(scenarioId: string, tresoActuelle: number, historique: Historique[], mois6: string[]) {
   const sc = SCENARIOS.find(s => s.id === scenarioId)!;
-  const lastRev = HISTORIQUE.at(-1)!.revenus;
-  const lastDep = HISTORIQUE.at(-1)!.depenses;
+  const actifs = historique.filter(h => h.revenus + h.depenses > 0);
+  const lastRev = actifs.length ? actifs.reduce((s, h) => s + h.revenus, 0) / actifs.length : 0;
+  const lastDep = actifs.length ? actifs.reduce((s, h) => s + h.depenses, 0) / actifs.length : 0;
 
-  return MOIS_FUTURS.map((mois, i) => {
+  return mois6.map((mois, i) => {
     const rev = lastRev * Math.pow(1 + sc.revCroiss, i + 1);
     const dep = lastDep * Math.pow(1 + sc.depCroiss, i + 1);
     const net = rev - dep;
@@ -94,9 +91,23 @@ function CustomTooltip({ active, payload, label }: {
 // ─── Page ───────────────────────────────────────────────────────────────────
 export default function PrevisionsPage() {
   const [scenario, setScenario] = useState<string>("realiste");
-  const [tresoActuelle] = useState(5_800_000); // FCFA de tréso actuelle (mock)
+  const [transactions] = useTransactions();
+  const [comptes] = usePersistedList<CompteSolde>("comptrack_comptes");
 
-  const projections = useMemo(() => projeter(scenario, tresoActuelle), [scenario, tresoActuelle]);
+  const historique = useMemo<Historique[]>(
+    () => computeDonneesMensuelles(transactions, 6).map(m => ({ mois: m.mois, revenus: m.revenus, depenses: m.depenses })),
+    [transactions]
+  );
+  const mois6 = useMemo(() => moisFuturs(), []);
+
+  const tresoActuelle = useMemo(() => {
+    if (comptes.length > 0) return comptes.reduce((s, c) => s + c.solde, 0);
+    return transactions
+      .filter(t => t.statut === "validee")
+      .reduce((s, t) => s + (t.type === "revenu" ? t.montant : -t.montant), 0);
+  }, [comptes, transactions]);
+
+  const projections = useMemo(() => projeter(scenario, tresoActuelle, historique, mois6), [scenario, tresoActuelle, historique, mois6]);
   const scConfig = SCENARIOS.find(s => s.id === scenario)!;
 
   // KPIs de projection
@@ -109,9 +120,7 @@ export default function PrevisionsPage() {
   const sante       = tresoNeg === -1 ? "Sain" : "Risqué";
 
   // Données combinées pour le graphe principal
-  const avgRevHist = HISTORIQUE.reduce((s, m) => s + m.revenus, 0) / HISTORIQUE.length;
-  const avgDepHist = HISTORIQUE.reduce((s, m) => s + m.depenses, 0) / HISTORIQUE.length;
-  const historique6 = HISTORIQUE.slice(-6).map(m => ({ ...m, projected: false }));
+  const historique6 = historique.map(m => ({ ...m, projected: false }));
   const combined = [...historique6, ...projections];
 
   // Données bénéfice mensuel projeté
@@ -121,6 +130,30 @@ export default function PrevisionsPage() {
     color: m.net >= 0 ? GREEN : RED,
   }));
 
+  if (transactions.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>Prévisions de trésorerie</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text2)" }}>
+            Projection sur 6 mois à partir de vos transactions
+          </p>
+        </div>
+        <div className="p-8 rounded-2xl text-center" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
+          <p className="text-base font-semibold mb-1" style={{ color: "var(--text)" }}>Pas encore assez de données</p>
+          <p className="text-sm mb-5 mx-auto max-w-md" style={{ color: "var(--text2)" }}>
+            Les prévisions se calculent à partir de vos revenus et dépenses réels. Enregistrez vos premières transactions pour les voir apparaître.
+          </p>
+          <Link href="/transactions"
+            className="inline-flex items-center px-4 min-h-10 rounded-xl text-sm font-semibold"
+            style={{ background: "var(--gold)", color: "var(--navy)" }}>
+            Ajouter une transaction
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
 
@@ -128,7 +161,7 @@ export default function PrevisionsPage() {
       <div>
         <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>Prévisions de trésorerie</h1>
         <p className="text-sm mt-1" style={{ color: "var(--text2)" }}>
-          Projection automatique sur 6 mois · Basé sur votre historique
+          Projection sur 6 mois · Moyenne de vos mois avec transactions, hypothèses de croissance par scénario
         </p>
       </div>
 
@@ -149,7 +182,7 @@ export default function PrevisionsPage() {
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm"
           style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text3)" }}>
           <Calendar className="w-3.5 h-3.5" />
-          Aoû – Jan 2027
+          {mois6[0]} – {mois6[5]}
         </div>
       </div>
 
@@ -219,7 +252,7 @@ export default function PrevisionsPage() {
       <div className="rounded-2xl p-5" style={{ background: "var(--bg2)", border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
-            <h3 className="text-sm font-bold" style={{ color: "var(--text)" }}>Flux financiers — 6 mois réels + 6 mois projetés</h3>
+            <h3 className="text-sm font-bold" style={{ color: "var(--text)" }}>Flux financiers — 6 derniers mois + 6 mois projetés</h3>
             <p className="text-xs mt-0.5" style={{ color: "var(--text3)" }}>La zone hachurée représente les projections</p>
           </div>
           <div className="flex gap-3 text-xs">
@@ -244,7 +277,7 @@ export default function PrevisionsPage() {
             <XAxis dataKey="mois" tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} />
             <YAxis tickFormatter={(v: number) => (v / 1_000_000).toFixed(1) + "M"} tick={{ fontSize: 10, fill: "var(--text3)" }} axisLine={false} tickLine={false} width={40} />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine x="Aoû 26" stroke={ORANGE} strokeDasharray="4 2" label={{ value: "Projection →", position: "insideTopRight", fontSize: 9, fill: ORANGE }} />
+            <ReferenceLine x={mois6[0]} stroke={ORANGE} strokeDasharray="4 2" label={{ value: "Projection →", position: "insideTopRight", fontSize: 9, fill: ORANGE }} />
             <Area type="monotone" dataKey="revenus"  name="Revenus"  stroke={GREEN} fill="url(#gRev)" strokeWidth={2} dot={false} />
             <Area type="monotone" dataKey="depenses" name="Dépenses" stroke={RED}   fill="url(#gDep)" strokeWidth={2} dot={false} />
           </AreaChart>
@@ -307,7 +340,7 @@ export default function PrevisionsPage() {
 
       {/* Disclaimer */}
       <p className="text-xs text-center" style={{ color: "var(--text3)" }}>
-        Les projections sont basées sur la tendance des 12 derniers mois et le scénario sélectionné.
+        Les projections prolongent la moyenne de vos mois enregistrés avec le scénario sélectionné (hypothèses de croissance, pas des mesures).
         Elles ne constituent pas une garantie financière.
       </p>
     </div>

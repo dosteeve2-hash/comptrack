@@ -2,10 +2,11 @@
 
 // app/(dashboard)/declarations/page.tsx
 import { useState, useMemo } from 'react'
+import { usePersistedList } from '@/lib/store'
 import {
   FileCheck2, Clock, AlertTriangle, TrendingDown,
-  X, ChevronDown, Search, Calendar, Building2,
-  CheckCircle2, AlertCircle, RotateCcw, Download,
+  X, ChevronDown, Search, Building2,
+  CheckCircle2, AlertCircle, RotateCcw, Plus,
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { formatMontant, formatDate } from '@/lib/utils'
@@ -32,105 +33,12 @@ interface Declaration {
   notes:        string
 }
 
-/* ─── Mock data ──────────────────────────────────────────────────── */
-const DECLARATIONS: Declaration[] = [
-  {
-    id: 'd1', type: 'TVA', titre: 'TVA — Juillet 2026',
-    periodicite: 'Mensuelle', statut: 'À déposer',
-    periode: 'Juillet 2026', dateLimite: '2026-08-15', dateDepot: null,
-    montantDu: 1_250_000, montantPaye: 0,
-    reference: null, organisme: 'DGI',
-    notes: 'TVA collectée 1 500 000 FCFA — TVA déductible 250 000 FCFA',
-  },
-  {
-    id: 'd2', type: 'TVA', titre: 'TVA — Juin 2026',
-    periodicite: 'Mensuelle', statut: 'Déposée',
-    periode: 'Juin 2026', dateLimite: '2026-07-15', dateDepot: '2026-07-12',
-    montantDu: 980_000, montantPaye: 980_000,
-    reference: 'DGI-TVA-2026-06-4471', organisme: 'DGI',
-    notes: 'Déposée en ligne sur DGI-BF portail',
-  },
-  {
-    id: 'd3', type: 'TVA', titre: 'TVA — Mai 2026',
-    periodicite: 'Mensuelle', statut: 'Déposée',
-    periode: 'Mai 2026', dateLimite: '2026-06-15', dateDepot: '2026-06-10',
-    montantDu: 1_100_000, montantPaye: 1_100_000,
-    reference: 'DGI-TVA-2026-05-3882', organisme: 'DGI',
-    notes: '',
-  },
-  {
-    id: 'd4', type: 'IUTS', titre: 'IUTS — Juillet 2026',
-    periodicite: 'Mensuelle', statut: 'À déposer',
-    periode: 'Juillet 2026', dateLimite: '2026-08-20', dateDepot: null,
-    montantDu: 420_000, montantPaye: 0,
-    reference: null, organisme: 'DGI',
-    notes: 'Calculé sur 6 salariés — masse salariale brute 3 800 000 FCFA',
-  },
-  {
-    id: 'd5', type: 'IUTS', titre: 'IUTS — Juin 2026',
-    periodicite: 'Mensuelle', statut: 'Déposée',
-    periode: 'Juin 2026', dateLimite: '2026-07-20', dateDepot: '2026-07-18',
-    montantDu: 395_000, montantPaye: 395_000,
-    reference: 'DGI-IUTS-2026-06-2210', organisme: 'DGI',
-    notes: '',
-  },
-  {
-    id: 'd6', type: 'CNSS', titre: 'CNSS — Juillet 2026',
-    periodicite: 'Mensuelle', statut: 'En cours',
-    periode: 'Juillet 2026', dateLimite: '2026-08-25', dateDepot: null,
-    montantDu: 760_000, montantPaye: 0,
-    reference: null, organisme: 'CNSS',
-    notes: 'Part patronale + part salariale — 6 employés déclarés',
-  },
-  {
-    id: 'd7', type: 'CNSS', titre: 'CNSS — Juin 2026',
-    periodicite: 'Mensuelle', statut: 'Déposée',
-    periode: 'Juin 2026', dateLimite: '2026-07-25', dateDepot: '2026-07-22',
-    montantDu: 718_000, montantPaye: 718_000,
-    reference: 'CNSS-2026-06-0095', organisme: 'CNSS',
-    notes: '',
-  },
-  {
-    id: 'd8', type: 'TVA', titre: 'TVA — Avril 2026',
-    periodicite: 'Mensuelle', statut: 'En retard',
-    periode: 'Avril 2026', dateLimite: '2026-05-15', dateDepot: null,
-    montantDu: 875_000, montantPaye: 0,
-    reference: null, organisme: 'DGI',
-    notes: 'URGENT — dépassement délai, pénalités en cours de calcul',
-  },
-  {
-    id: 'd9', type: 'DSU', titre: 'DSU — Exercice 2025',
-    periodicite: 'Annuelle', statut: 'Déposée',
-    periode: 'Exercice 2025', dateLimite: '2026-04-30', dateDepot: '2026-04-25',
-    montantDu: 0, montantPaye: 0,
-    reference: 'INSD-DSU-2025-BF-00831', organisme: 'INSD',
-    notes: 'Déclaration Statistique et Fiscale Unique déposée avant délai',
-  },
-  {
-    id: 'd10', type: 'IFU', titre: 'Renouvellement IFU 2026',
-    periodicite: 'Annuelle', statut: 'Déposée',
-    periode: '2026', dateLimite: '2026-03-31', dateDepot: '2026-03-15',
-    montantDu: 25_000, montantPaye: 25_000,
-    reference: 'IFU-BF-2026-04412', organisme: 'DGI',
-    notes: 'IFU renouvelé — valide jusqu\'au 31 décembre 2026',
-  },
-  {
-    id: 'd11', type: 'IS', titre: 'IS — Exercice 2025',
-    periodicite: 'Annuelle', statut: 'Déposée',
-    periode: 'Exercice 2025', dateLimite: '2026-05-31', dateDepot: '2026-05-28',
-    montantDu: 3_200_000, montantPaye: 3_200_000,
-    reference: 'DGI-IS-2025-00974', organisme: 'DGI',
-    notes: 'Impôt sur les Sociétés — BIC net imposable 12 800 000 FCFA — taux 25%',
-  },
-  {
-    id: 'd12', type: 'IS', titre: 'Acompte IS — Q3 2026',
-    periodicite: 'Trimestrielle', statut: 'À déposer',
-    periode: 'T3 2026', dateLimite: '2026-09-15', dateDepot: null,
-    montantDu: 800_000, montantPaye: 0,
-    reference: null, organisme: 'DGI',
-    notes: 'Acompte provisionnel 1/4 de IS annuel estimé',
-  },
-]
+/* ─── Stockage local ─────────────────────────────────────────────── */
+const STORAGE_KEY = 'comptrack_declarations'
+
+const ORGANISME_PAR_TYPE: Record<TypeDeclaration, Organisme> = {
+  TVA: 'DGI', IFU: 'DGI', IUTS: 'DGI', IS: 'DGI', CNSS: 'CNSS', DSU: 'INSD',
+}
 
 /* ─── Constants ──────────────────────────────────────────────────── */
 const STATUT_CONFIG: Record<StatutDeclaration, { color: string; bg: string; icon: React.ElementType }> = {
@@ -187,8 +95,7 @@ function KpiCard({ label, value, sub, color, icon: Icon }:
 }
 
 /* ─── Modal ──────────────────────────────────────────────────────── */
-function ModalDeclaration({ decl, onClose }: { decl: Declaration; onClose: () => void }) {
-  const cfg     = STATUT_CONFIG[decl.statut]
+function ModalDeclaration({ decl, onClose, onDeposer }: { decl: Declaration; onClose: () => void; onDeposer: () => void }) {
   const retard  = !decl.dateDepot && new Date(decl.dateLimite) < new Date()
   const avance  = decl.montantDu - decl.montantPaye
 
@@ -292,19 +199,12 @@ function ModalDeclaration({ decl, onClose }: { decl: Declaration; onClose: () =>
           {/* Actions */}
           <div className="flex gap-2 pt-1">
             {decl.statut === 'À déposer' || decl.statut === 'En retard' ? (
-              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
+              <button onClick={onDeposer} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
                 style={{ background: 'var(--gold)', color: '#000' }}>
                 <FileCheck2 className="w-4 h-4" />
                 Marquer comme déposée
               </button>
             ) : null}
-            {decl.reference && (
-              <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border hover:opacity-70"
-                style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
-                <Download className="w-4 h-4" />
-                Reçu
-              </button>
-            )}
             <button onClick={onClose}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border hover:opacity-70"
               style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>
@@ -323,9 +223,48 @@ export default function DeclarationsPage() {
   const [filterType, setFilterType] = useState<'all' | TypeDeclaration>('all')
   const [filterStat, setFilterStat] = useState<'all' | StatutDeclaration>('all')
   const [search,     setSearch]     = useState('')
+  const [declarations, setDeclarations] = usePersistedList<Declaration>(STORAGE_KEY)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [form, setForm] = useState({
+    type: 'TVA' as TypeDeclaration, titre: '', periodicite: 'Mensuelle' as Periodicite,
+    periode: '', dateLimite: '', montantDu: '', reference: '', notes: '',
+  })
+
+  const openModal = () => {
+    setForm({ type: 'TVA', titre: '', periodicite: 'Mensuelle', periode: '', dateLimite: '', montantDu: '', reference: '', notes: '' })
+    setFormError('')
+    setModalOpen(true)
+  }
+
+  const handleAdd = (ev: React.FormEvent) => {
+    ev.preventDefault()
+    const montantDu = form.montantDu.trim() === '' ? 0 : Number(form.montantDu)
+    if (!form.titre.trim() || !form.dateLimite || isNaN(montantDu) || montantDu < 0) {
+      setFormError('Indiquez un intitulé, une date limite et un montant valide (ou laissez vide).')
+      return
+    }
+    const retard = new Date(form.dateLimite) < new Date()
+    setDeclarations(prev => [{
+      id: `decl_${Date.now()}`, type: form.type, titre: form.titre.trim(), periodicite: form.periodicite,
+      statut: retard ? 'En retard' : 'À déposer', periode: form.periode.trim() || '—',
+      dateLimite: form.dateLimite, dateDepot: null, montantDu, montantPaye: 0,
+      reference: form.reference.trim() || null, organisme: ORGANISME_PAR_TYPE[form.type],
+      notes: form.notes.trim(),
+    }, ...prev])
+    setModalOpen(false)
+  }
+
+  const deposer = (id: string) => {
+    const aujourdhui = new Date().toISOString().split('T')[0]
+    setDeclarations(prev => prev.map(d => (d.id === id
+      ? { ...d, statut: 'Déposée' as StatutDeclaration, dateDepot: aujourdhui, montantPaye: d.montantDu }
+      : d)))
+    setSelected(null)
+  }
 
   const filtered = useMemo(() =>
-    DECLARATIONS.filter(d => {
+    declarations.filter(d => {
       if (filterType !== 'all' && d.type !== filterType) return false
       if (filterStat !== 'all' && d.statut !== filterStat) return false
       if (search) {
@@ -334,19 +273,19 @@ export default function DeclarationsPage() {
       }
       return true
     }),
-  [filterType, filterStat, search])
+  [declarations, filterType, filterStat, search])
 
   /* KPIs */
-  const deposees  = DECLARATIONS.filter(d => d.statut === 'Déposée').length
-  const aDeposer  = DECLARATIONS.filter(d => d.statut === 'À déposer').length
-  const enRetard  = DECLARATIONS.filter(d => d.statut === 'En retard').length
-  const totalPaye = DECLARATIONS.filter(d => d.montantPaye > 0).reduce((s, d) => s + d.montantPaye, 0)
+  const deposees  = declarations.filter(d => d.statut === 'Déposée').length
+  const aDeposer  = declarations.filter(d => d.statut === 'À déposer').length
+  const enRetard  = declarations.filter(d => d.statut === 'En retard').length
+  const totalPaye = declarations.filter(d => d.montantPaye > 0).reduce((s, d) => s + d.montantPaye, 0)
 
   /* Chart: montant payé par type */
   const chartData = (Object.keys(TYPE_COLORS) as TypeDeclaration[])
     .map(t => ({
       type: t,
-      montant: DECLARATIONS.filter(d => d.type === t).reduce((s, d) => s + d.montantPaye, 0),
+      montant: declarations.filter(d => d.type === t).reduce((s, d) => s + d.montantPaye, 0),
     }))
     .filter(d => d.montant > 0)
 
@@ -361,13 +300,13 @@ export default function DeclarationsPage() {
         <div>
           <h1 className="text-2xl font-bold">Déclarations fiscales</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text2)' }}>
-            {filtered.length} déclaration{filtered.length !== 1 ? 's' : ''} · BF 2026
+            {filtered.length} déclaration{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold hover:brightness-110"
+        <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
           style={{ background: 'var(--gold)', color: '#000' }}>
-          <Calendar className="w-4 h-4" />
-          Calendrier fiscal
+          <Plus className="w-4 h-4" />
+          Nouvelle déclaration
         </button>
       </div>
 
@@ -390,7 +329,7 @@ export default function DeclarationsPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Déposées" value={`${deposees}`}
-          sub={`sur ${DECLARATIONS.length} déclarations`}
+          sub={`sur ${declarations.length} déclarations`}
           color="#22c55e" icon={FileCheck2} />
         <KpiCard label="À déposer" value={`${aDeposer}`}
           sub="prochaines échéances"
@@ -399,11 +338,12 @@ export default function DeclarationsPage() {
           sub="à régulariser urgemment"
           color="#ef4444" icon={AlertTriangle} />
         <KpiCard label="Impôts payés" value={new Intl.NumberFormat('fr-FR').format(totalPaye) + ' F'}
-          sub="total exercice 2025–2026"
+          sub="total des paiements enregistrés"
           color="#00D4FF" icon={TrendingDown} />
       </div>
 
       {/* Chart */}
+      {chartData.length > 0 && (
       <div className="p-5 rounded-2xl border" style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
         <h2 className="text-sm font-semibold mb-1">Impôts versés par type</h2>
         <p className="text-xs mb-4" style={{ color: 'var(--text2)' }}>Montants effectivement payés (FCFA)</p>
@@ -424,6 +364,7 @@ export default function DeclarationsPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -473,7 +414,15 @@ export default function DeclarationsPage() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-10 text-center text-sm" style={{ color: 'var(--text3)' }}>
-                    Aucune déclaration trouvée
+                    {declarations.length === 0 ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <span>Aucune déclaration enregistrée pour le moment.</span>
+                        <button onClick={openModal} className="inline-flex items-center gap-2 px-4 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                          style={{ background: 'var(--gold)', color: '#000' }}>
+                          <Plus className="w-4 h-4" /> Ajouter une déclaration
+                        </button>
+                      </div>
+                    ) : 'Aucune déclaration ne correspond aux filtres'}
                   </td>
                 </tr>
               ) : filtered.map(d => {
@@ -540,7 +489,66 @@ export default function DeclarationsPage() {
         ))}
       </div>
 
-      {selected && <ModalDeclaration decl={selected} onClose={() => setSelected(null)} />}
+      {selected && <ModalDeclaration decl={selected} onClose={() => setSelected(null)} onDeposer={() => deposer(selected.id)} />}
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)' }}
+          onClick={e => e.target === e.currentTarget && setModalOpen(false)}>
+          <form onSubmit={handleAdd} className="w-full max-w-md rounded-2xl border p-6 space-y-3 max-h-[90vh] overflow-y-auto"
+            style={{ background: 'var(--bg2)', borderColor: 'var(--border)' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-lg">Nouvelle déclaration</h3>
+              <button type="button" onClick={() => setModalOpen(false)} aria-label="Fermer"
+                className="p-2 rounded-xl" style={{ color: 'var(--text2)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Type</label>
+                <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value as TypeDeclaration }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)' }}>
+                  {(Object.keys(TYPE_COLORS) as TypeDeclaration[]).map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>Périodicité</label>
+                <select value={form.periodicite} onChange={e => setForm(p => ({ ...p, periodicite: e.target.value as Periodicite }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)' }}>
+                  {(['Mensuelle', 'Trimestrielle', 'Annuelle'] as Periodicite[]).map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+            {[
+              { label: 'Intitulé *', key: 'titre', type: 'text', placeholder: 'Ex. déclaration du mois' },
+              { label: 'Période concernée', key: 'periode', type: 'text', placeholder: 'Mois, trimestre ou exercice' },
+              { label: 'Date limite *', key: 'dateLimite', type: 'date', placeholder: '' },
+              { label: 'Montant dû (FCFA)', key: 'montantDu', type: 'number', placeholder: 'Laisser vide si aucun montant' },
+              { label: 'Référence de dépôt', key: 'reference', type: 'text', placeholder: 'Numéro de reçu (facultatif)' },
+              { label: 'Notes', key: 'notes', type: 'text', placeholder: 'Facultatif' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text2)' }}>{f.label}</label>
+                <input type={f.type} placeholder={f.placeholder}
+                  value={form[f.key as 'titre' | 'periode' | 'dateLimite' | 'montantDu' | 'reference' | 'notes']}
+                  onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+              </div>
+            ))}
+            {formError && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>{formError}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={() => setModalOpen(false)} className="flex-1 min-h-10 rounded-xl text-sm font-medium border"
+                style={{ borderColor: 'var(--border)', color: 'var(--text2)' }}>Annuler</button>
+              <button type="submit" className="flex-1 min-h-10 rounded-xl text-sm font-semibold hover:brightness-110"
+                style={{ background: 'var(--gold)', color: '#000' }}>Enregistrer</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
