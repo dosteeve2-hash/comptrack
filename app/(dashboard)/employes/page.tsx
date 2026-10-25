@@ -8,7 +8,7 @@ import { formatMontant } from '@/lib/utils'
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const C = {
-  navy:'#0A1628', gold:'#D4AF37', cyan:'#00D4FF', bg2:'#0c1a34', bg3:'#111d34',
+  navy:'#082829', gold:'#D9A441', cyan:'#B9C8BC', bg2:'#0a3031', bg3:'#124243',
   border:'#1a3357', border2:'#2a4a72', text:'#EBF4FF', text2:'#8BABC9',
   text3:'#4E6F8E', green:'#22c55e', red:'#ef4444', amber:'#f59e0b', blue:'#3b82f6',
 }

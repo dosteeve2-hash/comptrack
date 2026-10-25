@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function ConfidentialitePage() {
   return (
     <PageLegale titre="Politique de confidentialité" misAJour="octobre 2026">
-      <Section titre="En mode démo : tout reste sur votre appareil">
+      <Section titre="Dans l’aperçu public : les données restent sur votre appareil">
         <p>
           Quand vous ouvrez le tableau de bord sans compte, les informations que vous saisissez
           (transactions, factures, clients, employés, etc.) sont enregistrées dans le stockage local de votre
@@ -20,11 +20,11 @@ export default function ConfidentialitePage() {
           sont plus disponibles. Pensez à exporter ce qui compte.
         </p>
       </Section>
-      <Section titre="Si la création de compte est activée">
+      <Section titre="Authentification non activée sur le déploiement public">
         <p>
-          Votre adresse e-mail et votre mot de passe sont gérés par le service d&apos;authentification Supabase.
-          Nous ne voyons jamais votre mot de passe en clair. Nous utilisons ces informations uniquement pour
-          vous connecter.
+          Les formulaires de compte ne permettent pas de créer un compte sur ce déploiement. Si une
+          authentification est activée à l’avenir, cette politique précisera les données concernées et leur
+          traitement avant sa mise en service.
         </p>
       </Section>
       <Section titre="Mesure des erreurs techniques">
@@ -38,7 +38,7 @@ export default function ConfidentialitePage() {
         <p>
           Vous pouvez demander l&apos;accès, la correction ou la suppression des données associées à votre
           compte en écrivant à{" "}
-          <a href="mailto:docompaore2@gmail.com" className="underline" style={{ color: "var(--cyan)" }}>
+          <a href="mailto:docompaore2@gmail.com" className="underline">
             docompaore2@gmail.com
           </a>
           . Pour les données du mode démo, vous les supprimez vous-même en vidant les données du site dans votre
@@ -50,7 +50,7 @@ export default function ConfidentialitePage() {
       </Section>
       <Section titre="Évolutions">
         <p>
-          CompTrack est en phase pilote : cette politique sera mise à jour si le fonctionnement change, et la
+          CompTrack est en développement : cette politique sera mise à jour si le fonctionnement change, et la
           date ci-dessus en fera foi.
         </p>
       </Section>

@@ -39,7 +39,7 @@ export default function DashboardError({ error, reset }: ErrorProps) {
       <button
         onClick={reset}
         className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold"
-        style={{ background: '#D4AF37', color: '#0A1628' }}
+        style={{ background: '#D9A441', color: '#082829' }}
       >
         <RefreshCw className="w-4 h-4" />
         Réessayer

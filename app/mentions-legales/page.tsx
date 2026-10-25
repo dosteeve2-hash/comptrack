@@ -11,13 +11,13 @@ export default function MentionsLegalesPage() {
     <PageLegale titre="Mentions légales" misAJour="octobre 2026">
       <Section titre="Éditeur">
         <p>
-          CompTrack est un produit de l&apos;écosystème FORGE Afrika, en phase pilote. Il est édité à titre
+          CompTrack est un produit de l&apos;écosystème FORGE Afrika, en développement. Il est édité à titre
           individuel par Steve Donald Compaoré. Aucune société n&apos;est mise en avant à ce stade : ce site
-          présente un logiciel en test, pas une offre commerciale établie.
+          présente un aperçu logiciel, pas une offre commerciale établie.
         </p>
         <p>
           Contact :{" "}
-          <a href="mailto:docompaore2@gmail.com" className="underline" style={{ color: "var(--cyan)" }}>
+          <a href="mailto:docompaore2@gmail.com" className="underline">
             docompaore2@gmail.com
           </a>
         </p>
