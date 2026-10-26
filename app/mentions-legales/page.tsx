@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PageLegale, { Section } from "@/components/PageLegale";
 
 export const metadata: Metadata = {
-  title: "Mentions légales — CompTrack",
+  title: "Mentions légales",
   description: "Qui édite CompTrack, qui l'héberge et comment nous joindre.",
 };
 

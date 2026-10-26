@@ -5,7 +5,7 @@ import { supabaseConfigure } from "@/lib/supabase/config";
 import ConnexionFormulaire from "./ConnexionFormulaire";
 
 export const metadata: Metadata = {
-  title: "Connexion — CompTrack",
+  title: "Connexion",
   description: "Connectez-vous à votre espace CompTrack.",
 };
 
