@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 
 // ─── Constantes de style ────────────────────────────────────────────────────
-const GOLD   = "#D4AF37";
-const CYAN   = "#00BCD4";
+const GOLD   = "#D9A441";
+const CYAN   = "#B9C8BC";
 const GREEN  = "#10B981";
 const RED    = "#EF4444";
 const ORANGE = "#F59E0B";
@@ -173,7 +173,7 @@ export default function PrevisionsPage() {
             onClick={() => setScenario(sc.id)}
             className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
             style={scenario === sc.id
-              ? { background: sc.color, color: "#0A1628" }
+              ? { background: sc.color, color: "#082829" }
               : { background: "var(--bg3)", color: "var(--text2)", border: "1px solid var(--border)" }}
           >
             {scenario === sc.id && "▶ "}{sc.label}

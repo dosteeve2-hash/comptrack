@@ -87,8 +87,8 @@ export function TresorerieAreaChart({
           <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
             <defs>
               <linearGradient id="gradCyan" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="#00BCD4" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#00BCD4" stopOpacity={0} />
+                <stop offset="5%"  stopColor="#B9C8BC" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#B9C8BC" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -96,7 +96,7 @@ export function TresorerieAreaChart({
             <YAxis tick={{ fill: 'var(--text2)', fontSize: 10 }} axisLine={false} tickLine={false}
               tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(1)}M`} />
             <Tooltip content={<CustomTooltip />} />
-            <Area type="monotone" dataKey="solde" stroke="#00BCD4" strokeWidth={2} fill="url(#gradCyan)" />
+            <Area type="monotone" dataKey="solde" stroke="#B9C8BC" strokeWidth={2} fill="url(#gradCyan)" />
           </AreaChart>
         </ResponsiveContainer>
       ) : (

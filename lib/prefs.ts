@@ -19,7 +19,7 @@ export interface UserPrefs {
 
 export const DEFAULT_PREFS: UserPrefs = {
   companyName: "Mon Entreprise",
-  accentColor: "#d4af37",
+  accentColor: "#d9a441",
   currency: "XOF",
   country: "Burkina Faso",
   density: "confort",
@@ -37,7 +37,7 @@ export const CURRENCIES: { code: UserPrefs["currency"]; label: string }[] = [
 ];
 
 export const ACCENT_PRESETS = [
-  { name: "Or",      value: "#d4af37" },
+  { name: "Laiton",  value: "#d9a441" },
   { name: "Bleu",    value: "#2f6fed" },
   { name: "Vert",    value: "#16a34a" },
   { name: "Violet",  value: "#8b5cf6" },

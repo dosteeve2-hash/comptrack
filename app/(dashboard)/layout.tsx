@@ -88,7 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Logo */}
       <div className="px-4 py-4 border-b" style={{ borderColor: "var(--border)" }}>
         <Link href="/" className="hover:opacity-80 transition-opacity">
-          <CompTrackLogo size="sm" />
+          <CompTrackLogo size="sm" variant="dark" />
         </Link>
       </div>
 
@@ -192,7 +192,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const currentLabel = navItems.find((n) => pathname.startsWith(n.href))?.label ?? "Dashboard";
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div className="ct-app flex h-screen overflow-hidden" style={{ background: "var(--bg)" }}>
 
       {/* Sidebar desktop */}
       <aside

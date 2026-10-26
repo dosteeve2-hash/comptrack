@@ -23,7 +23,7 @@ const TYPE_CFG = {
   succes: { icon: CheckCircle,  color: "#22c55e", bg: "rgba(34,197,94,0.12)"   },
   alerte: { icon: AlertTriangle,color: "#f59e0b", bg: "rgba(245,158,11,0.12)"  },
   erreur: { icon: XCircle,      color: "#ef4444", bg: "rgba(239,68,68,0.12)"   },
-  info:   { icon: Info,         color: "#00BCD4", bg: "rgba(0,188,212,0.12)"   },
+  info:   { icon: Info,         color: "#B9C8BC", bg: "rgba(185,200,188,0.12)" },
 } as const;
 
 // ─── Composant ────────────────────────────────────────────────────────────────

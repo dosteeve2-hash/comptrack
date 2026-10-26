@@ -30,11 +30,11 @@ export default function ScrollToTop() {
           aria-label="Retour en haut"
           className="fixed bottom-6 right-6 z-50 w-11 h-11 flex items-center justify-center rounded-xl shadow-lg"
           style={{
-            background: '#0D1E38',
-            border: '1px solid #243D68',
-            color: '#D4AF37',
+            background: 'var(--brand-petrol)',
+            border: '1px solid var(--brass-400)',
+            color: 'var(--paper-50)',
           }}
-          whileHover={{ background: '#D4AF37', color: '#0A1628', scale: 1.05 }}
+          whileHover={{ background: 'var(--brass-400)', color: 'var(--navy)', scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
           <ArrowUp size={18} />

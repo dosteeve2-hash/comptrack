@@ -40,7 +40,7 @@ export default function BilanPage() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
             style={{ background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.3)' }}>
-            <FileText className="w-5 h-5" style={{ color: '#D4AF37' }} />
+            <FileText className="w-5 h-5" style={{ color: '#D9A441' }} />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Bilan comptable</h1>
@@ -59,8 +59,8 @@ export default function BilanPage() {
                 onClick={() => setExercice(ex)}
                 className="px-4 py-2 text-sm font-medium transition-colors"
                 style={{
-                  background: exercice === ex ? '#D4AF37' : 'var(--bg2)',
-                  color:      exercice === ex ? '#0A1628'  : 'var(--text2)',
+                  background: exercice === ex ? '#D9A441' : 'var(--bg2)',
+                  color:      exercice === ex ? '#082829'  : 'var(--text2)',
                 }}>
                 {ex === 'N' ? 'Exercice N' : 'Exercice N-1'}
               </button>
@@ -95,7 +95,7 @@ export default function BilanPage() {
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text3)' }}>
             Total Actif
           </span>
-          <span className="text-2xl font-bold tabular-nums" style={{ color: '#00BCD4' }}>
+          <span className="text-2xl font-bold tabular-nums" style={{ color: '#B9C8BC' }}>
             {fmt(totalActif)}
           </span>
         </div>
@@ -104,7 +104,7 @@ export default function BilanPage() {
           <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text3)' }}>
             Total Passif
           </span>
-          <span className="text-2xl font-bold tabular-nums" style={{ color: '#D4AF37' }}>
+          <span className="text-2xl font-bold tabular-nums" style={{ color: '#D9A441' }}>
             {fmt(totalPassif)}
           </span>
         </div>

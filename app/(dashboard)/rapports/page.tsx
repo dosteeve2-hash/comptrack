@@ -783,7 +783,7 @@ export default function RapportsPage() {
             </p>
           </div>
           <span className="flex items-center gap-1.5 text-xs">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#00D4FF" }} />
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#B9C8BC" }} />
             Bénéfice net
           </span>
         </div>
@@ -810,9 +810,9 @@ export default function RapportsPage() {
                 type="monotone"
                 dataKey="benefice"
                 name="Bénéfice"
-                stroke="#00D4FF"
+                stroke="#B9C8BC"
                 strokeWidth={2.5}
-                dot={{ fill: "#00D4FF", r: 4, strokeWidth: 0 }}
+                dot={{ fill: "#B9C8BC", r: 4, strokeWidth: 0 }}
                 activeDot={{ r: 6 }}
               />
             </LineChart>

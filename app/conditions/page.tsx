@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 export default function ConditionsPage() {
   return (
     <PageLegale titre="Conditions d'utilisation" misAJour="octobre 2026">
-      <Section titre="Un logiciel en phase pilote">
+      <Section titre="Un logiciel en développement">
         <p>
-          CompTrack est en test avec ses premiers utilisateurs. Des fonctions peuvent changer, être
+          CompTrack est présenté sous forme d’aperçu public. Des fonctions peuvent changer, être
           interrompues ou disparaître. Il est fourni tel quel, sans garantie de disponibilité continue.
         </p>
       </Section>
@@ -26,7 +26,7 @@ export default function ConditionsPage() {
       <Section titre="Vos données">
         <p>
           Vous restez propriétaire des données que vous saisissez. Voir la{" "}
-          <Link href="/confidentialite" className="underline" style={{ color: "var(--cyan)" }}>
+          <Link href="/confidentialite" className="underline">
             politique de confidentialité
           </Link>{" "}
           pour savoir où elles sont stockées.
@@ -41,18 +41,18 @@ export default function ConditionsPage() {
       <Section titre="Tarifs">
         <p>
           Les formules affichées sur la page{" "}
-          <Link href="/tarifs" className="underline" style={{ color: "var(--cyan)" }}>
+          <Link href="/tarifs" className="underline">
             Tarifs
           </Link>{" "}
-          indiquent l&apos;intention de prix. Pendant la phase pilote, aucun paiement n&apos;est collecté sur ce
-          site : toute offre payante sera convenue par écrit avec vous avant facturation.
+          indiquent les montants prévus. Aucun paiement n&apos;est collecté sur ce site et aucune souscription
+          n&apos;est activée dans l&apos;aperçu.
         </p>
       </Section>
       <Section titre="Résiliation">
         <p>
           Vous pouvez arrêter d&apos;utiliser CompTrack à tout moment. Pour supprimer les données d&apos;un
           compte, écrivez à{" "}
-          <a href="mailto:docompaore2@gmail.com" className="underline" style={{ color: "var(--cyan)" }}>
+          <a href="mailto:docompaore2@gmail.com" className="underline">
             docompaore2@gmail.com
           </a>
           .
