@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PageLegale, { Section } from "@/components/PageLegale";
 
 export const metadata: Metadata = {
-  title: "Politique de confidentialité — CompTrack",
+  title: "Politique de confidentialité",
   description: "Quelles données CompTrack garde, où, et comment les effacer.",
 };
 

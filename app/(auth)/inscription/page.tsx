@@ -4,7 +4,7 @@ import { supabaseConfigure } from "@/lib/supabase/config";
 import InscriptionFormulaire from "./InscriptionFormulaire";
 
 export const metadata: Metadata = {
-  title: "Créer un compte — CompTrack",
+  title: "Créer un compte",
   description: "Créez votre compte CompTrack gratuitement.",
 };
 

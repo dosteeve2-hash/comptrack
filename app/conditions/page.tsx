@@ -3,7 +3,7 @@ import Link from "next/link";
 import PageLegale, { Section } from "@/components/PageLegale";
 
 export const metadata: Metadata = {
-  title: "Conditions d'utilisation — CompTrack",
+  title: "Conditions d'utilisation",
   description: "Les règles simples d'utilisation de CompTrack pendant la phase pilote.",
 };
 
