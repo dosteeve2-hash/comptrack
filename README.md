@@ -1,4 +1,6 @@
-# 📊 CompTrack
+<p align="center"><img src="public/brand/mark.svg" alt="CompTrack" width="72" height="72"></p>
+
+<h1 align="center">📊 CompTrack</h1>
 
 > La comptabilité B2B pensée pour les PMEs africaines — simple, fiable, conforme.
 
