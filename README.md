@@ -2,10 +2,9 @@
 
 <h1 align="center">📊 CompTrack</h1>
 
-> La comptabilité B2B pensée pour les PMEs africaines — simple, fiable, conforme.
+> Aperçu en développement : un logiciel de comptabilité simple pour les PMEs africaines, avec un plan comptable SYSCOHADA simplifié. Pas de certification de conformité.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge&color=0A1628)
-![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![Statut](https://img.shields.io/badge/statut-aper%C3%A7u%20en%20d%C3%A9veloppement-blue?style=for-the-badge&color=0A1628)
 ![Next.js](https://img.shields.io/badge/Next.js_15-black?style=for-the-badge&logo=next.js)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
@@ -14,21 +13,21 @@
 
 **[📄 PRD](./PRD.md)**
 
-## 🌍 Demo Live
+## 🌍 Aperçu en ligne
 
-**Application live :** https://comptrack-chi.vercel.app
+**Aperçu (démonstration) :** https://comptrack-chi.vercel.app
 
-> Comptabilité B2B simplifiée pour PMEs africaines — transactions, factures, rapports en FCFA
+> Les données saisies restent dans le navigateur (localStorage) ; aucune base de données ni client réel derrière l'aperçu. La facturation de l'abonnement n'est pas activée.
 
 ---
 
 ## 🎯 Problème résolu
 
-Les PMEs africaines n'ont pas accès à des logiciels comptables adaptés à leur contexte : les solutions occidentales sont trop complexes, trop chères et non conformes aux normes locales (SYSCOHADA). Résultat : comptabilité approximative, impossibilité d'obtenir des financements, décisions stratégiques prises à l'aveugle.
+Les PMEs africaines n'ont pas accès à des logiciels comptables adaptés à leur contexte : les solutions occidentales sont trop complexes, trop chères et non conformes aux normes locales (SYSCOHADA). Résultat (constat de départ) : comptabilité approximative, impossibilité d'obtenir des financements, décisions stratégiques prises à l'aveugle.
 
 ## 💡 Solution
 
-CompTrack est un logiciel de comptabilité B2B cloud conçu pour les PMEs africaines. Il couvre la gestion complète des clients, fournisseurs, factures, dépenses et revenus, avec des tableaux de bord financiers clairs, des prévisions intelligentes et des rapports exportables — sans nécessiter de formation comptable avancée.
+CompTrack est un logiciel de comptabilité pour PMEs africaines, en développement. L'aperçu permet de saisir clients, fournisseurs, factures, dépenses et revenus, avec des tableaux de bord, des projections de trésorerie par scénarios (calcul simple à partir de l'historique saisi, sans IA) et des exports. Il n'est pas certifié conforme SYSCOHADA : le plan comptable est une version simplifiée.
 
 **Cible :** Dirigeants de PMEs, comptables et DAF d'entreprises africaines de 5 à 200 employés.
 
@@ -36,18 +35,22 @@ CompTrack est un logiciel de comptabilité B2B cloud conçu pour les PMEs africa
 
 ## 🖥️ Pages & Fonctionnalités
 
+Toutes les pages ci-dessous existent dans l'aperçu ; les données sont stockées localement dans le navigateur.
+
 | Page | Description |
 |------|-------------|
 | `/` — Dashboard | Synthèse financière : trésorerie, revenus/dépenses du mois, alertes |
 | `/clients` | Gestion du portefeuille clients — fiches, historique, encours de facturation |
 | `/fournisseurs` | Carnet fournisseurs — contacts, conditions de paiement, historique achats |
-| `/factures` | Création, envoi et suivi des factures — statuts, relances automatiques |
+| `/factures` | Création et suivi des factures — statuts, export PDF ; pas d'envoi ni de relances automatiques |
 | `/revenus` | Journal des revenus — catégorisation, graphiques d'évolution |
-| `/depenses` | Suivi des dépenses — catégories, justificatifs, validation |
+| `/depenses` | Suivi des dépenses — catégories (pas de dépôt de justificatifs) |
 | `/objectifs` | Définition et suivi d'objectifs financiers par période |
-| `/previsions` | Prévisions de trésorerie et projections financières intelligentes |
-| `/rapports` | Génération de rapports comptables (bilan, compte de résultat, flux) |
-| `/notifications` | Centre d'alertes : factures en retard, seuils atteints, échéances |
+| `/previsions` | Projections de trésorerie par scénarios, calculées à partir de l'historique saisi |
+| `/rapports` | Rapports : aperçu, bilan et compte de résultat simplifiés |
+| `/notifications` | Centre d'alertes : factures en retard, échéances |
+
+S'ajoutent d'autres écrans d'aperçu : transactions, trésorerie, budgets, bilan, paie, employés, contrats, déclarations, vente rapide, apprendre (voir `app/(dashboard)/`).
 
 ---
 
@@ -59,9 +62,11 @@ CompTrack est un logiciel de comptabilité B2B cloud conçu pour les PMEs africa
 | Langage | TypeScript |
 | Styles | Tailwind CSS |
 | Animations | Framer Motion |
-| Base de données | Supabase (PostgreSQL + Auth + Storage) |
+| Données | localStorage (navigateur) ; migration vers Supabase prévue |
+| Authentification | Supabase Auth (si configuré sur le déploiement) |
+| Monitoring | Sentry |
 | Déploiement | Vercel |
-| UI Components | shadcn/ui |
+| Graphiques / PDF | Recharts, jsPDF |
 
 **Charte graphique :** Navy `#0A1628` · Gold `#D4AF37` · Cyan `#00BCD4`
 
@@ -73,16 +78,17 @@ CompTrack est un logiciel de comptabilité B2B cloud conçu pour les PMEs africa
 git clone https://github.com/dosteeve2-hash/comptrack.git
 cd comptrack
 npm install
-cp .env.example .env.local
+cp .env.local.example .env.local
 ```
 
-Configure les variables dans `.env.local` :
+Pour activer la connexion, ajouter dans `.env.local` (sans elles, l'aperçu fonctionne sans compte) :
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
+
+`.env.local.example` ne contient que les variables Sentry (`NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`).
 
 ```bash
 npm run dev
@@ -96,26 +102,15 @@ npm run dev
 ```
 comptrack/
 ├── app/
-│   ├── (dashboard)/
-│   │   ├── clients/
-│   │   ├── fournisseurs/
-│   │   ├── factures/
-│   │   ├── revenus/
-│   │   ├── depenses/
-│   │   ├── objectifs/
-│   │   ├── previsions/
-│   │   ├── rapports/
-│   │   └── notifications/
+│   ├── (auth)/          # connexion, inscription
+│   ├── (dashboard)/     # clients, factures, transactions, rapports, ...
+│   ├── tarifs/          # tarifs prévus (facturation non activée)
 │   └── layout.tsx
-├── components/
-│   ├── ui/
-│   ├── finance/
-│   └── shared/
-├── lib/
-│   ├── supabase/
-│   └── utils/
-├── public/
-└── types/
+├── components/          # composants partagés et public/
+├── lib/                 # store (localStorage), data, export, supabase/
+├── supabase/migrations/
+├── specs/
+└── public/
 ```
 
 ---
@@ -127,7 +122,7 @@ CompTrack est un produit de **[FORGE Afrika](https://github.com/dosteeve2-hash/f
 > *Forger l'Afrique de demain, un produit à la fois.*
 
 **Autres produits de l'écosystème :**
-- 🏭 [TAAMA](https://github.com/dosteeve2-hash/taama) — ERP industriel pour PMEs de transformation
+- 🏭 [MillTrack](https://github.com/dosteeve2-hash/milltrack) — suivi de production et traçabilité des usines de transformation (TAAMA en est devenu le module Qualité)
 - 🌱 [FORJA](https://github.com/dosteeve2-hash/forja) — Plateforme SaaS d'exportation de café burkinabè
 - 🛍️ [MIFA Life](https://github.com/dosteeve2-hash/Mifa_Life_shop) — Marketplace de produits locaux africains
 
