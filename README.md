@@ -140,3 +140,6 @@ CompTrack est un produit de **[FORGE Afrika](https://github.com/dosteeve2-hash/f
 <div align="center">
   <sub>Construit avec ❤️ au Burkina Faso · FORGE Afrika © 2025</sub>
 </div>
+## Licence
+
+Tous droits réservés (voir LICENSE).
